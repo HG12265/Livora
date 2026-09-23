@@ -17,10 +17,10 @@ def match_nsqf_qps_for_profile(profile_data: dict) -> list:
     for qp in all_qps:
         score = 78 # Base score
 
-        if ("agri" in occupation or "farm" in occupation) and "AGR" in qp["id"]:
+        if ("weaver" in occupation or "handloom" in occupation or "textile" in occupation or "loom" in occupation) and "AMH" in qp["id"]:
             score = 96
-        elif ("weaver" in occupation or "handloom" in occupation or "textile" in occupation) and "AMH" in qp["id"]:
-            score = 94
+        elif ("agri" in occupation or "farm" in occupation) and "AGR" in qp["id"]:
+            score = 96
         elif ("solar" in occupation or "electric" in occupation) and "ELE" in qp["id"]:
             score = 92
         elif ("computer" in occupation or "data" in occupation or "12th" in education) and "SSC" in qp["id"]:

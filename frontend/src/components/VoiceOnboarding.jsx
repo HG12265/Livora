@@ -25,27 +25,28 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
       field: 'name',
       questionTa: 'வணக்கம்! PM-AJAY உதவி மையத்திற்கு வரவேற்கிறோம். உங்கள் பெயர் மற்றும் ஊர் சொல்லுங்கள்?',
       questionEn: 'Welcome to PM-AJAY Livelihood Assistant! Please tell me your Name and Location?',
-      placeholder: 'e.g. Gowtham, Salem',
+      placeholder: 'e.g. Jeeva from Tharamangalam',
       icon: User
     },
     {
       field: 'education',
       questionTa: 'உங்கள் கல்வித் தகுதி மற்றும் படிப்பு விவரங்களை சொல்லுங்கள்?',
       questionEn: 'What is your Educational qualification?',
-      placeholder: 'e.g. 12th Standard / Diploma / 10th',
+      placeholder: 'e.g. 10th Standard / 12th Standard / Diploma',
       icon: BookOpen
     },
     {
       field: 'familyOccupation',
-      questionTa: 'உங்கள் குடும்பத்தின் பாரம்பரிய தொழில் அல்லது உங்களுக்குத் தெரிந்த வேலைகள் என்ன?',
+      questionTa: 'உங்கள் குடும்பத்தின்பாரம்பரிய தொழில் அல்லது உங்களுக்குத் தெரிந்த வேலைகள் என்ன?',
       questionEn: 'What is your family or traditional occupation & skills?',
-      placeholder: 'e.g. Agriculture / Handloom / Electronics / Computer',
+      placeholder: 'e.g. Handloom / Agriculture / Solar / Computer',
       icon: Briefcase
     },
     {
       field: 'mobility',
       questionTa: 'உங்களால் பயிற்சிக்கு வேறு ஊருக்கு செல்ல முடியுமா? (உள் ஊர் / மாவட்டம்)?',
       questionEn: 'Are you comfortable traveling for training (Local / District)?',
+      placeholder: 'e.g. Local (within 15km) / District Level',
       icon: MapPin
     },
     {
@@ -154,17 +155,29 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
           finalProfile = apiResult.profile;
           matchedCourses = apiResult.matched_courses;
         } else {
-          // Instant robust fallback
-          const rawNameLoc = profileData.name || "Gowtham, Salem";
-          const rawEdu = profileData.education || "12th Standard";
-          const rawOcc = profileData.familyOccupation || "Agriculture";
+          // Robust client fallback parsing
+          const rawNameLoc = profileData.name || "Jeeva from Tharamangalam";
+          const rawEdu = profileData.education || "10th Standard";
+          const rawOcc = profileData.familyOccupation || "Handloom";
           
+          let parsedName = "Jeeva";
+          let parsedLoc = "Tharamangalam, Tamil Nadu";
+
+          if (rawNameLoc.toLowerCase().includes("from")) {
+            const parts = rawNameLoc.split(/from/i);
+            parsedName = parts[0].replace(/^(my name is|i am)\s+/i, '').strip() || "Jeeva";
+            parsedLoc = parts[1].strip() + ", Tamil Nadu";
+          } else {
+            parsedName = rawNameLoc.split(',')[0] || "Jeeva";
+            parsedLoc = rawNameLoc.includes(',') ? rawNameLoc.split(',')[1].trim() + ", Tamil Nadu" : "Tharamangalam, Tamil Nadu";
+          }
+
           finalProfile = {
-            name: rawNameLoc.split(',')[0] || "Gowtham",
-            location: rawNameLoc.includes(',') ? rawNameLoc.split(',')[1].trim() + ", Tamil Nadu" : "Salem, Tamil Nadu",
+            name: parsedName,
+            location: parsedLoc,
             education: rawEdu,
             familyOccupation: rawOcc.charAt(0).toUpperCase() + rawOcc.slice(1),
-            currentSkills: `Knowledge in ${rawOcc}, local operations`,
+            currentSkills: `Skill in ${rawOcc}, local handloom & traditional work`,
             mobility: profileData.mobility || "Local",
             preference: profileData.preference || "Self-Employment"
           };
@@ -175,10 +188,10 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
       } catch (err) {
         console.error('Submit error:', err);
         onProfileCreated({
-          name: "Gowtham",
-          location: "Salem, Tamil Nadu",
-          education: profileData.education || "12th Standard",
-          familyOccupation: profileData.familyOccupation || "Agriculture & Organic Farming",
+          name: "Jeeva",
+          location: "Tharamangalam, Tamil Nadu",
+          education: profileData.education || "10th Standard",
+          familyOccupation: profileData.familyOccupation || "Handloom Weaving",
           mobility: "Local",
           preference: "Self-Employment"
         }, null);
@@ -303,7 +316,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             disabled={apiProcessing}
             className="flex items-center gap-2 bg-[#087F5B] hover:bg-[#066749] text-white px-6 py-3 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all"
           >
-            <span>{apiProcessing ? 'Processing Profile & Pathways...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
+            <span>{apiProcessing ? 'Saving to MongoDB & Gemini AI...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
           </button>
         </div>
 
