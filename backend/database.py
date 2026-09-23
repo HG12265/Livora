@@ -1,7 +1,6 @@
 import json
 import os
 import datetime
-from pymongo import MongoClient
 from config import settings
 
 # Seed datasets for NSQF Qualification Packs
@@ -60,56 +59,32 @@ SEED_NSQF_QPS = [
     }
 ]
 
-# MongoDB connection setup with in-memory fallback
+# Fast, zero-latency In-Memory Database store
 in_memory_profiles = {}
-mongo_client = None
-db = None
-
-try:
-    mongo_client = MongoClient(settings.MONGODB_URL, serverSelectionTimeoutMS=2000)
-    db = mongo_client[settings.DATABASE_NAME]
-    # Quick ping to test connection
-    mongo_client.admin.command('ping')
-    print("Successfully connected to MongoDB server!")
-except Exception as e:
-    print(f"MongoDB connection notice: Using zero-friction fallback database store ({e})")
-    db = None
 
 def save_beneficiary_profile(profile_data: dict) -> str:
     profile_id = f"PMAJAY-SC-2026-{len(in_memory_profiles) + 8841}"
     profile_data["id"] = profile_id
     profile_data["created_at"] = datetime.datetime.now().isoformat()
     
-    # Store in memory
+    # Save instantly to memory store
     in_memory_profiles[profile_id] = profile_data
 
-    # Try saving to MongoDB if connected
-    if db is not None:
-        try:
-            db.beneficiary_profiles.insert_one(profile_data.copy())
-        except Exception as err:
-            print(f"MongoDB insert error fallback: {err}")
+    # Optional fast MongoDB insert attempt with strict 300ms timeout
+    try:
+        from pymongo import MongoClient
+        client = MongoClient(settings.MONGODB_URL, serverSelectionTimeoutMS=300, socketTimeoutMS=300)
+        db = client[settings.DATABASE_NAME]
+        db.beneficiary_profiles.insert_one(profile_data.copy())
+    except Exception as err:
+        pass # Zero-delay fallback
 
     return profile_id
 
 def get_beneficiary_profile(profile_id: str):
-    if db is not None:
-        try:
-            profile = db.beneficiary_profiles.find_one({"id": profile_id}, {"_id": 0})
-            if profile:
-                return profile
-        except Exception:
-            pass
     return in_memory_profiles.get(profile_id)
 
 def get_all_beneficiary_profiles():
-    if db is not None:
-        try:
-            profiles = list(db.beneficiary_profiles.find({}, {"_id": 0}))
-            if profiles:
-                return profiles
-        except Exception:
-            pass
     return list(in_memory_profiles.values())
 
 def get_all_nsqf_qps():

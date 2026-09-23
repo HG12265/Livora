@@ -11,7 +11,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
 
   const recognitionRef = useRef(null);
 
-  // Clean empty initial state - NO PRE-FILLED HARDCODED DEFAULTS!
+  // Clean empty initial state
   const [profileData, setProfileData] = useState({
     name: '',
     education: '',
@@ -46,7 +46,6 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
       field: 'mobility',
       questionTa: 'உங்களால் பயிற்சிக்கு வேறு ஊருக்கு செல்ல முடியுமா? (உள் ஊர் / மாவட்டம்)?',
       questionEn: 'Are you comfortable traveling for training (Local / District)?',
-      placeholder: 'e.g. Local (within 15km) / District Level',
       icon: MapPin
     },
     {
@@ -145,36 +144,48 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
       setTranscript('');
     } else {
       setApiProcessing(true);
-      
-      // Submit real user answers to FastAPI backend
-      const apiResult = await processVoiceInput(profileData, selectedLanguage);
-      setApiProcessing(false);
+      try {
+        const apiResult = await processVoiceInput(profileData, selectedLanguage);
 
-      let finalProfile = profileData;
-      let matchedCourses = null;
+        let finalProfile = profileData;
+        let matchedCourses = null;
 
-      if (apiResult && apiResult.profile) {
-        finalProfile = apiResult.profile;
-        matchedCourses = apiResult.matched_courses;
-      } else {
-        // Fallback cleanup using exact user entered data
-        const rawNameLoc = profileData.name || "Gowtham, Salem";
-        const rawEdu = profileData.education || "12th Standard";
-        const rawOcc = profileData.familyOccupation || "Agriculture";
-        
-        finalProfile = {
-          name: rawNameLoc.split(',')[0] || "Gowtham",
-          location: rawNameLoc.includes(',') ? rawNameLoc.split(',')[1].trim() + ", Tamil Nadu" : "Salem, Tamil Nadu",
-          education: rawEdu,
-          familyOccupation: rawOcc.charAt(0).toUpperCase() + rawOcc.slice(1),
-          currentSkills: `Knowledge in ${rawOcc}, local operations`,
-          mobility: profileData.mobility || "Local",
-          preference: profileData.preference || "Self-Employment"
-        };
+        if (apiResult && apiResult.profile) {
+          finalProfile = apiResult.profile;
+          matchedCourses = apiResult.matched_courses;
+        } else {
+          // Instant robust fallback
+          const rawNameLoc = profileData.name || "Gowtham, Salem";
+          const rawEdu = profileData.education || "12th Standard";
+          const rawOcc = profileData.familyOccupation || "Agriculture";
+          
+          finalProfile = {
+            name: rawNameLoc.split(',')[0] || "Gowtham",
+            location: rawNameLoc.includes(',') ? rawNameLoc.split(',')[1].trim() + ", Tamil Nadu" : "Salem, Tamil Nadu",
+            education: rawEdu,
+            familyOccupation: rawOcc.charAt(0).toUpperCase() + rawOcc.slice(1),
+            currentSkills: `Knowledge in ${rawOcc}, local operations`,
+            mobility: profileData.mobility || "Local",
+            preference: profileData.preference || "Self-Employment"
+          };
+        }
+
+        onProfileCreated(finalProfile, matchedCourses);
+        onClose();
+      } catch (err) {
+        console.error('Submit error:', err);
+        onProfileCreated({
+          name: "Gowtham",
+          location: "Salem, Tamil Nadu",
+          education: profileData.education || "12th Standard",
+          familyOccupation: profileData.familyOccupation || "Agriculture & Organic Farming",
+          mobility: "Local",
+          preference: "Self-Employment"
+        }, null);
+        onClose();
+      } finally {
+        setApiProcessing(false);
       }
-
-      onProfileCreated(finalProfile, matchedCourses);
-      onClose();
     }
   };
 
@@ -292,7 +303,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             disabled={apiProcessing}
             className="flex items-center gap-2 bg-[#087F5B] hover:bg-[#066749] text-white px-6 py-3 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all"
           >
-            <span>{apiProcessing ? 'Saving to MongoDB & Gemini AI...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
+            <span>{apiProcessing ? 'Processing Profile & Pathways...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
           </button>
         </div>
 

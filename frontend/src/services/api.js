@@ -1,6 +1,9 @@
 const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 export async function processVoiceInput(profileData, language = 'ta') {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
+
   try {
     const payload = typeof profileData === 'object' 
       ? { ...profileData, language } 
@@ -10,14 +13,16 @@ export async function processVoiceInput(profileData, language = 'ta') {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: controller.signal
     });
     
+    clearTimeout(timeoutId);
     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
     const data = await response.json();
-    console.log('FastAPI Voice Process Response:', data);
     return data;
   } catch (error) {
-    console.warn('FastAPI API call error, using local fallback:', error);
+    clearTimeout(timeoutId);
+    console.warn('FastAPI API call error/timeout, using instant client fallback:', error);
     return null;
   }
 }
