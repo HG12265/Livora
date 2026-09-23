@@ -59,25 +59,47 @@ SEED_NSQF_QPS = [
     }
 ]
 
-# Fast, zero-latency In-Memory Database store
-in_memory_profiles = {}
+# Database repository store initialized with sample beneficiary profiles
+in_memory_profiles = {
+    "PMAJAY-SC-2026-8841": {
+        "id": "PMAJAY-SC-2026-8841",
+        "name": "Jeeva",
+        "location": "Tharamangalam, Tamil Nadu",
+        "education": "10th Standard",
+        "familyOccupation": "Handloom Weaving & Textiles",
+        "currentSkills": "Skill in Handloom Weaving & Textiles, local traditional craftsmanship",
+        "mobility": "Local",
+        "preference": "Self-Employment",
+        "created_at": datetime.datetime.now().isoformat()
+    },
+    "PMAJAY-SC-2026-8842": {
+        "id": "PMAJAY-SC-2026-8842",
+        "name": "Gowtham",
+        "location": "Salem, Tamil Nadu",
+        "education": "12th Standard",
+        "familyOccupation": "Agriculture & Organic Farming",
+        "currentSkills": "Agricultural operations & crop management",
+        "mobility": "Local",
+        "preference": "Self-Employment",
+        "created_at": datetime.datetime.now().isoformat()
+    }
+}
 
 def save_beneficiary_profile(profile_data: dict) -> str:
     profile_id = f"PMAJAY-SC-2026-{len(in_memory_profiles) + 8841}"
     profile_data["id"] = profile_id
     profile_data["created_at"] = datetime.datetime.now().isoformat()
     
-    # Save instantly to memory store
     in_memory_profiles[profile_id] = profile_data
 
-    # Optional fast MongoDB insert attempt with strict 300ms timeout
+    # Optional fast MongoDB insert attempt with strict timeout
     try:
         from pymongo import MongoClient
         client = MongoClient(settings.MONGODB_URL, serverSelectionTimeoutMS=300, socketTimeoutMS=300)
         db = client[settings.DATABASE_NAME]
         db.beneficiary_profiles.insert_one(profile_data.copy())
-    except Exception as err:
-        pass # Zero-delay fallback
+    except Exception:
+        pass
 
     return profile_id
 
