@@ -18,16 +18,7 @@ function App() {
   const [isIvrModalOpen, setIsIvrModalOpen] = useState(false);
   const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
 
-  const [beneficiaryProfile, setBeneficiaryProfile] = useState({
-    name: "Gowtham",
-    location: "Salem, Tamil Nadu",
-    education: "12th Standard",
-    familyOccupation: "Agriculture & Organic Farming",
-    currentSkills: "Agricultural operations & crop management",
-    mobility: "Local",
-    preference: "Self-Employment"
-  });
-
+  const [beneficiaryProfile, setBeneficiaryProfile] = useState(null);
   const [customMatchedCourses, setCustomMatchedCourses] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
 

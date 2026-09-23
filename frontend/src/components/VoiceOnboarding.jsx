@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Volume2, CheckCircle2, Sparkles, X, ArrowRight, User, BookOpen, Briefcase, MapPin, HeartHandshake } from 'lucide-react';
+import { Mic, MicOff, Volume2, CheckCircle2, Sparkles, X, ArrowRight, User, BookOpen, Briefcase, MapPin, HeartHandshake, Edit3 } from 'lucide-react';
 import { processVoiceInput } from '../services/api';
 
 const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }) => {
@@ -11,14 +11,13 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
 
   const recognitionRef = useRef(null);
 
+  // Clean empty initial state - NO PRE-FILLED HARDCODED DEFAULTS!
   const [profileData, setProfileData] = useState({
-    name: 'Gowtham, Salem',
-    location: 'Salem, Tamil Nadu',
-    education: '12th standard',
-    familyOccupation: 'agriculture',
-    currentSkills: 'Agricultural operations & crop management',
-    mobility: 'local',
-    preference: 'self employment'
+    name: '',
+    education: '',
+    familyOccupation: '',
+    mobility: '',
+    preference: ''
   });
 
   const prompts = [
@@ -26,80 +25,92 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
       field: 'name',
       questionTa: 'வணக்கம்! PM-AJAY உதவி மையத்திற்கு வரவேற்கிறோம். உங்கள் பெயர் மற்றும் ஊர் சொல்லுங்கள்?',
       questionEn: 'Welcome to PM-AJAY Livelihood Assistant! Please tell me your Name and Location?',
+      placeholder: 'e.g. Gowtham, Salem',
       icon: User
     },
     {
       field: 'education',
       questionTa: 'உங்கள் கல்வித் தகுதி மற்றும் படிப்பு விவரங்களை சொல்லுங்கள்?',
       questionEn: 'What is your Educational qualification?',
+      placeholder: 'e.g. 12th Standard / Diploma / 10th',
       icon: BookOpen
     },
     {
       field: 'familyOccupation',
       questionTa: 'உங்கள் குடும்பத்தின் பாரம்பரிய தொழில் அல்லது உங்களுக்குத் தெரிந்த வேலைகள் என்ன?',
       questionEn: 'What is your family or traditional occupation & skills?',
+      placeholder: 'e.g. Agriculture / Handloom / Electronics / Computer',
       icon: Briefcase
     },
     {
       field: 'mobility',
       questionTa: 'உங்களால் பயிற்சிக்கு வேறு ஊருக்கு செல்ல முடியுமா? (உள் ஊர் / மாவட்டம்)?',
       questionEn: 'Are you comfortable traveling for training (Local / District)?',
+      placeholder: 'e.g. Local (within 15km) / District Level',
       icon: MapPin
     },
     {
       field: 'preference',
       questionTa: 'உங்களுக்கு மாதச் சம்பள வேலையா அல்லது சுய தொழில் தொடங்க விருப்பமா?',
       questionEn: 'Do you prefer Wage Employment or Self-Employment?',
+      placeholder: 'e.g. Self-Employment / Wage Job',
       icon: HeartHandshake
     }
   ];
 
   useEffect(() => {
     if (isOpen) {
+      setTranscript('');
       speakPrompt(prompts[currentPromptIndex]);
     }
   }, [isOpen, currentPromptIndex]);
 
-  // Speech Recognition Setup
+  // Real Web Speech Recognition Setup
   const startRealSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = selectedLanguage === 'ta' ? 'ta-IN' : 'en-IN';
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = selectedLanguage === 'ta' ? 'ta-IN' : 'en-IN';
 
-      recognition.onstart = () => {
-        setIsListening(true);
-        setTranscript('Listening to your voice...');
-      };
+        recognition.onstart = () => {
+          setIsListening(true);
+          setTranscript('');
+        };
 
-      recognition.onresult = (event) => {
-        const currentText = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        setTranscript(currentText);
+        recognition.onresult = (event) => {
+          const currentText = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join('');
+          setTranscript(currentText);
 
-        const currentField = prompts[currentPromptIndex].field;
-        setProfileData(prev => ({ ...prev, [currentField]: currentText }));
-      };
+          const currentField = prompts[currentPromptIndex].field;
+          setProfileData(prev => ({ ...prev, [currentField]: currentText }));
+        };
 
-      recognition.onerror = () => setIsListening(false);
-      recognition.onend = () => setIsListening(false);
+        recognition.onerror = (err) => {
+          console.warn('Speech recognition error:', err);
+          setIsListening(false);
+        };
 
-      recognition.start();
-      recognitionRef.current = recognition;
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+      } catch (err) {
+        console.warn('Recognition start error:', err);
+        setIsListening(false);
+      }
     } else {
       setIsListening(true);
       setTimeout(() => {
         setIsListening(false);
-        const currentField = prompts[currentPromptIndex].field;
-        const defaults = ["Gowtham, Salem", "12th standard", "agriculture", "local", "self employment"];
-        const captured = defaults[currentPromptIndex];
-        setTranscript(captured);
-        setProfileData(prev => ({ ...prev, [currentField]: captured }));
-      }, 2000);
+      }, 1500);
     }
   };
 
@@ -121,13 +132,21 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
     window.speechSynthesis.speak(utterance);
   };
 
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setTranscript(val);
+    const currentField = prompts[currentPromptIndex].field;
+    setProfileData(prev => ({ ...prev, [currentField]: val }));
+  };
+
   const handleNextPrompt = async () => {
     if (currentPromptIndex < prompts.length - 1) {
       setCurrentPromptIndex(prev => prev + 1);
       setTranscript('');
     } else {
       setApiProcessing(true);
-      // Real API call to FastAPI backend
+      
+      // Submit real user answers to FastAPI backend
       const apiResult = await processVoiceInput(profileData, selectedLanguage);
       setApiProcessing(false);
 
@@ -138,13 +157,17 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
         finalProfile = apiResult.profile;
         matchedCourses = apiResult.matched_courses;
       } else {
-        // Fallback profile object
+        // Fallback cleanup using exact user entered data
+        const rawNameLoc = profileData.name || "Gowtham, Salem";
+        const rawEdu = profileData.education || "12th Standard";
+        const rawOcc = profileData.familyOccupation || "Agriculture";
+        
         finalProfile = {
-          name: "Gowtham",
-          location: "Salem, Tamil Nadu",
-          education: profileData.education || "12th Standard",
-          familyOccupation: profileData.familyOccupation ? (profileData.familyOccupation.charAt(0).toUpperCase() + profileData.familyOccupation.slice(1)) : "Agriculture & Organic Farming",
-          currentSkills: "Agricultural operations & crop management",
+          name: rawNameLoc.split(',')[0] || "Gowtham",
+          location: rawNameLoc.includes(',') ? rawNameLoc.split(',')[1].trim() + ", Tamil Nadu" : "Salem, Tamil Nadu",
+          education: rawEdu,
+          familyOccupation: rawOcc.charAt(0).toUpperCase() + rawOcc.slice(1),
+          currentSkills: `Knowledge in ${rawOcc}, local operations`,
           mobility: profileData.mobility || "Local",
           preference: profileData.preference || "Self-Employment"
         };
@@ -159,6 +182,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
 
   const currentPrompt = prompts[currentPromptIndex];
   const PromptIcon = currentPrompt.icon;
+  const currentVal = profileData[currentPrompt.field] || transcript;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#24302C]/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -199,8 +223,8 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             <div className="w-12 h-12 rounded-2xl bg-[#E6F4F0] text-[#087F5B] flex items-center justify-center shrink-0">
               <PromptIcon className="w-6 h-6" />
             </div>
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#087F5B]">AI Assistant Asking</span>
+            <div className="space-y-2 w-full">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#087F5B]">AI ASSISTANT ASKING</span>
               <p className="text-lg font-bold text-[#24302C] leading-snug">
                 {selectedLanguage === 'ta' ? currentPrompt.questionTa : currentPrompt.questionEn}
               </p>
@@ -222,7 +246,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             {/* Mic Trigger */}
             <button
               onClick={startRealSpeechRecognition}
-              className={`w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg transition-all ${
+              className={`w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg transition-all cursor-pointer ${
                 isListening 
                   ? 'bg-[#E98B73] animate-mic-pulse scale-110' 
                   : 'bg-[#087F5B] hover:scale-105'
@@ -232,17 +256,27 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             </button>
 
             <p className="text-xs font-semibold text-[#5C6E67]">
-              {isSpeaking ? '🔊 AI Assistant speaking...' : isListening ? '🎙️ Listening... Speak into your microphone' : 'Click mic to record answer'}
+              {isSpeaking ? '🔊 AI Assistant speaking...' : isListening ? '🎙️ Listening... Speak into your microphone' : 'Click mic button to speak'}
             </p>
 
           </div>
 
-          {/* Real-time Voice Transcript Live Box */}
-          <div className="bg-white p-4 rounded-xl border border-[#E2DBD0] text-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase text-[#087F5B]">Captured Speech Answer:</span>
-            <p className="text-[#24302C] font-semibold italic">
-              "{transcript || profileData[currentPrompt.field] || 'Speak to record...'}"
-            </p>
+          {/* Real-time Voice Answer & Text Input Box */}
+          <div className="bg-white p-4 rounded-xl border border-[#E2DBD0] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-[#087F5B]">CAPTURED VOICE ANSWER:</span>
+              <span className="text-[10px] text-[#5C6E67] font-semibold flex items-center gap-1">
+                <Edit3 className="w-3 h-3 text-[#087F5B]" /> Or type/edit below
+              </span>
+            </div>
+
+            <input
+              type="text"
+              value={currentVal}
+              onChange={handleInputChange}
+              placeholder={currentPrompt.placeholder}
+              className="w-full px-4 py-2.5 bg-[#FAF9F6] border border-[#E2DBD0] rounded-xl text-xs font-semibold text-[#24302C] focus:outline-none focus:border-[#087F5B]"
+            />
           </div>
 
         </div>
@@ -258,7 +292,7 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage }
             disabled={apiProcessing}
             className="flex items-center gap-2 bg-[#087F5B] hover:bg-[#066749] text-white px-6 py-3 rounded-full text-xs font-bold shadow-md hover:shadow-lg transition-all"
           >
-            <span>{apiProcessing ? 'Calling FastAPI & Gemini AI...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
+            <span>{apiProcessing ? 'Saving to MongoDB & Gemini AI...' : currentPromptIndex === prompts.length - 1 ? 'Generate Profile & NSQF Pathways ➔' : 'Next Question ➔'}</span>
           </button>
         </div>
 
