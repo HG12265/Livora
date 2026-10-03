@@ -27,33 +27,33 @@ const Navbar = ({ currentView, setCurrentView, selectedLanguage, setSelectedLang
   return (
     <header className="w-full sticky top-0 z-50 shadow-sm">
       {/* Main Navbar */}
-      <nav className="w-full bg-white/95 backdrop-blur-md border-b border-[#E2DBD0] px-4 lg:px-10 py-3 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <nav className="w-full bg-white/95 backdrop-blur-md border-b border-[#E2DBD0] px-3 sm:px-6 py-2.5 transition-all">
+        <div className="max-w-[1600px] w-full mx-auto flex items-center justify-between gap-2">
           
           {/* Brand Logo */}
           <div 
             onClick={() => setCurrentView('home')} 
-            className="flex items-center gap-2.5 cursor-pointer group flex-shrink-0"
+            className="flex items-center gap-2 cursor-pointer group flex-shrink-0"
           >
-            <div className="w-9 h-9 rounded-2xl bg-[#087F5B] flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-md">
-              <Leaf className="w-5 h-5 text-white fill-white/20" />
+            <div className="w-8 h-8 rounded-xl bg-[#087F5B] flex items-center justify-center text-white group-hover:scale-105 transition-transform shadow-md">
+              <Leaf className="w-4 h-4 text-white fill-white/20" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xl font-extrabold tracking-tight text-[#087F5B] font-['Outfit']">Livora</span>
+                <span className="text-lg font-black tracking-tight text-[#087F5B] font-['Outfit']">Livora</span>
                 <span className="text-[9px] bg-[#E6F4F0] text-[#087F5B] font-extrabold px-1.5 py-0.5 rounded-full border border-[#087F5B]/30">
                   PM-AJAY
                 </span>
               </div>
-              <p className="text-[9px] text-[#5C6E67] font-medium tracking-tight hidden xl:block">
+              <p className="text-[9px] text-[#5C6E67] font-medium tracking-tight hidden 2xl:block">
                 {t.tagline}
               </p>
             </div>
           </div>
 
           {/* Navigation Links - Smooth horizontal scrolling without clipping */}
-          <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar py-1">
-            <div className="flex items-center gap-1.5 w-max mx-auto px-3">
+          <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 w-max mx-auto px-1 sm:px-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
@@ -67,7 +67,7 @@ const Navbar = ({ currentView, setCurrentView, selectedLanguage, setSelectedLang
                         setCurrentView(item.id);
                       }
                     }}
-                    className={`px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap flex-shrink-0 text-xs font-bold ${
+                    className={`px-2.5 xl:px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap flex-shrink-0 text-xs font-bold ${
                       isActive 
                         ? 'bg-[#087F5B] text-white shadow-sm ring-1 ring-[#087F5B]' 
                         : item.highlight

@@ -70,3 +70,15 @@ h1, h2, h3, h4, h5, h6 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media print {
+  header, footer, nav, button, .print\:hidden {
+    display: none !important;
+  }
+  body, #root {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

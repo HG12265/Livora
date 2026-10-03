@@ -225,16 +225,185 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage =
     }
   };
 
+  const handleSelectDemoPersona = (persona) => {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch (e) {}
+    }
+    setApiProcessing(true);
+    setTimeout(() => {
+      onProfileCreated(persona.profile, persona.matchedCourses);
+      onClose();
+      setApiProcessing(false);
+    }, 600);
+  };
+
+  const demoPersonas = [
+    {
+      id: 'muthu',
+      badge: t.persona1Badge || "Tamil Nadu • Agriculture Laborer",
+      name: t.persona1Name || "Muthu (8th Pass)",
+      goal: t.persona1Goal || "Wants Solar Pump Technician (NSQF L4) & ₹50,000 Toolkit Grant",
+      icon: "⚡",
+      profile: {
+        id: "PMAJAY-SC-2026-TN-4109",
+        name: "Muthu from Tharamangalam, Salem",
+        location: "Tharamangalam Village, Salem, Tamil Nadu",
+        district: "Salem",
+        state: "Tamil Nadu",
+        education: "8th Standard Pass",
+        familyOccupation: "Marginal Agriculture & Daily Wage",
+        currentSkills: "Farm motor maintenance, basic 3-phase wiring, diesel engine handling",
+        currentActivity: "Seasonal agriculture laborer, earning ₹6,500 / month",
+        mobility: "Ready to travel within Salem & Erode district cluster",
+        preference: "Solar Pump Technician & PM-AJAY Toolkit Grant for motor workshop",
+        assignedConsultant: "Mr. R. Sundaramoorthy",
+        recommendedCourse: "Solar PV Installer (Suryamitra)",
+        grantEligible: "₹50,000 Solar Toolkit & Inverter Testing Kit under PM-AJAY GIA"
+      },
+      matchedCourses: [
+        {
+          id: "SGJ/Q0101",
+          role: "Solar PV Installer (Suryamitra)",
+          level: 4,
+          sector: "Green Jobs / Renewable Energy",
+          durationHours: 300,
+          avgSalary: "₹20,000 - ₹32,000 / month",
+          matchScore: 98,
+          eligibleGrant: "₹50,000 Solar Installation Kit Grant",
+          giaToolkitGrant: "₹50,000 Solar Installation Toolkit (Clamp Meter, Wire Stripper, Safety Harness)",
+          skillGaps: ["AC/DC High Voltage Safety", "Inverter Grid Synchronization", "Solar Panel Array Angling"],
+          description: "Equips rural youth to install, wire, and maintain decentralized solar agricultural pumps and rooftop solar units under PM-KUSUM & PM-AJAY."
+        },
+        {
+          id: "ELE/Q1401",
+          role: "Field Technician - Home Appliances",
+          level: 4,
+          sector: "Electronics & Hardware",
+          durationHours: 350,
+          avgSalary: "₹18,000 - ₹28,000 / month",
+          matchScore: 89,
+          eligibleGrant: "₹45,000 Electronics Repair Toolkit",
+          giaToolkitGrant: "₹45,000 Complete Soldering & Testing Station",
+          skillGaps: ["PCB Soldering Standards", "Digital Circuit Troubleshooting"],
+          description: "Bridge training from informal repair to certified home appliance technician."
+        }
+      ]
+    },
+    {
+      id: 'pooja',
+      badge: t.persona2Badge || "Madhya Pradesh • Handloom Family",
+      name: t.persona2Name || "Pooja Ahirwar (10th Dropout)",
+      goal: t.persona2Goal || "Wants Apparel & Self-Help Enterprise with Micro-Grant",
+      icon: "🧵",
+      profile: {
+        id: "PMAJAY-SC-2026-MP-7721",
+        name: "Pooja Ahirwar from Deori, Sagar",
+        location: "Deori Block, Sagar, Madhya Pradesh",
+        district: "Sagar",
+        state: "Madhya Pradesh",
+        education: "10th Standard Dropout",
+        familyOccupation: "Traditional Handloom Weaving",
+        currentSkills: "Fabric cutting, pattern stitching, traditional embroidery",
+        currentActivity: "Home-based alteration and tailoring, earning ₹5,000 / month",
+        mobility: "Local Gram Panchayat cluster (within 10km)",
+        preference: "Self-Employment Apparel SHG with PM-AJAY Micro Grant",
+        assignedConsultant: "Ms. Sunita Sharma",
+        recommendedCourse: "Self Employed Tailor & Fashion Craftsman",
+        grantEligible: "₹50,000 Motorized Sewing Machine & Fabric Starter Kit"
+      },
+      matchedCourses: [
+        {
+          id: "AMH/Q1947",
+          role: "Self Employed Tailor & Fashion Craftsman",
+          level: 4,
+          sector: "Apparel, Made-Ups & Home Furnishing",
+          durationHours: 340,
+          avgSalary: "₹16,000 - ₹26,000 / month",
+          matchScore: 99,
+          eligibleGrant: "₹50,000 Motorized Sewing Machine Kit",
+          giaToolkitGrant: "₹50,000 Industrial Motorized Machine + Overlock cutter + Pattern Kit",
+          skillGaps: ["Commercial Garment Sizing", "Electric Overlock Stitching", "Cost Estimation & E-Commerce"],
+          description: "Specialized for rural women and SC artisans transitioning into high-value boutique and school uniform enterprise."
+        },
+        {
+          id: "AMH/Q1001",
+          role: "Export Hand Embroiderer",
+          level: 3,
+          sector: "Handicrafts & Carpet",
+          durationHours: 280,
+          avgSalary: "₹14,000 - ₹22,000 / month",
+          matchScore: 88,
+          eligibleGrant: "₹35,000 Artisan Handloom Kit",
+          giaToolkitGrant: "₹35,000 Wooden Frame & Zari Thread Starter Pack",
+          skillGaps: ["Export Quality Finishing", "Color Fastness Inspection"],
+          description: "Certified hand embroidery training with direct linkage to State Handloom Corporation."
+        }
+      ]
+    },
+    {
+      id: 'ramesh',
+      badge: t.persona3Badge || "Telangana • ITI Wireman",
+      name: t.persona3Name || "Ramesh Varma (10th + ITI)",
+      goal: t.persona3Goal || "Wants Agri-Drone Service Technician & Bank Loan Linkage",
+      icon: "🌾",
+      profile: {
+        id: "PMAJAY-SC-2026-TS-9304",
+        name: "Ramesh Varma from Kazipet, Warangal",
+        location: "Kazipet, Warangal Urban, Telangana",
+        district: "Warangal",
+        state: "Telangana",
+        education: "10th + ITI Wireman",
+        familyOccupation: "Small Electrical Appliance Repair",
+        currentSkills: "Domestic wiring, motor rewinding, electronic relays",
+        currentActivity: "Apprentice electrician, earning ₹8,000 / month",
+        mobility: "Anywhere in Warangal / Hyderabad industrial corridor",
+        preference: "Agricultural Drone Operations & Enterprise Setup with Mudra linkage",
+        assignedConsultant: "Mr. K. Srinivas Rao",
+        recommendedCourse: "Drone Service Technician (Kisan Drone)",
+        grantEligible: "₹50,000 Drone Maintenance Tooling Kit + Stand-Up India Loan"
+      },
+      matchedCourses: [
+        {
+          id: "AER/Q1101",
+          role: "Drone Service Technician (Kisan Drone)",
+          level: 5,
+          sector: "Aerospace & Aviation / Agri-Tech",
+          durationHours: 420,
+          avgSalary: "₹24,000 - ₹38,000 / month",
+          matchScore: 96,
+          eligibleGrant: "₹50,000 Agri-Tech Equipment Grant",
+          giaToolkitGrant: "₹50,000 Smart LiPo Charger, Calibration Rig & Spray Nozzle Testing Kit",
+          skillGaps: ["DGCA Drone Flight Regulations", "LiPo Battery Safety & Avionics Calibration", "Agri-Chemical Payload Calculations"],
+          description: "Prepares candidates to operate and service agricultural pesticide spraying drones for rural farmer cooperatives."
+        },
+        {
+          id: "AGR/Q1201",
+          role: "Micro Irrigation Technician",
+          level: 4,
+          sector: "Agriculture & Allied",
+          durationHours: 320,
+          avgSalary: "₹18,000 - ₹28,000 / month",
+          matchScore: 87,
+          eligibleGrant: "₹40,000 Drip Irrigation Toolset",
+          giaToolkitGrant: "₹40,000 Pipe Fusion & Pressure Gauge Toolkit",
+          skillGaps: ["Automated Venturi Injector Maintenance", "GPS Land Contouring"],
+          description: "Specialized installation and maintenance of solar and automated drip irrigation systems."
+        }
+      ]
+    }
+  ];
+
   if (!isOpen) return null;
 
   const StepIcon = getStepIcon(currentStep.field);
 
   return (
     <div className="fixed inset-0 z-50 bg-[#24302C]/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-      <div className="bg-[#FAF9F6] border border-[#E2DBD0] rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden my-auto">
+      <div className="bg-[#FAF9F6] border border-[#E2DBD0] rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden my-auto max-h-[95vh] flex flex-col">
         
         {/* Top Header */}
-        <div className="bg-white px-6 py-4 border-b border-[#E2DBD0] flex items-center justify-between">
+        <div className="bg-white px-6 py-4 border-b border-[#E2DBD0] flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-2xl bg-[#087F5B] text-white flex items-center justify-center shadow-sm">
               <Mic className="w-5 h-5 text-white" />
@@ -262,15 +431,52 @@ const VoiceOnboarding = ({ isOpen, onClose, onProfileCreated, selectedLanguage =
           </button>
         </div>
 
+        {/* 1-Click Judge Demo Personas Strip */}
+        <div className="bg-[#FFFDF9] border-b border-[#E2DBD0] px-6 py-3 flex-shrink-0">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-[10px] font-black uppercase text-[#087F5B] tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#E98B73]" />
+              {t.demoPersonasHeader || "⚡ 1-Click Evaluation Personas (Instant AI Profile)"}
+            </span>
+            <span className="text-[10px] font-semibold text-[#5C6E67] hidden sm:inline">
+              Skip microphone for fast demonstration
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {demoPersonas.map((persona) => (
+              <button
+                key={persona.id}
+                onClick={() => handleSelectDemoPersona(persona)}
+                disabled={apiProcessing}
+                className="bg-white hover:bg-[#E6F4F0] border border-[#E2DBD0] hover:border-[#087F5B] p-2.5 rounded-2xl text-left transition-all group flex flex-col justify-between shadow-2xs hover:shadow-sm"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-[9px] font-extrabold text-[#087F5B] mb-0.5">
+                    <span>{persona.badge}</span>
+                    <span className="text-xs">{persona.icon}</span>
+                  </div>
+                  <p className="text-xs font-bold text-[#24302C] group-hover:text-[#087F5B] transition-colors line-clamp-1">
+                    {persona.name}
+                  </p>
+                </div>
+                <p className="text-[9px] text-[#5C6E67] mt-1 line-clamp-1 italic">
+                  {persona.goal}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Progress Bar */}
-        <div className="bg-[#E2DBD0]/40 h-1.5 w-full">
+        <div className="bg-[#E2DBD0]/40 h-1.5 w-full flex-shrink-0">
           <div 
             className="bg-[#087F5B] h-1.5 transition-all duration-300"
             style={{ width: `${((currentPromptIndex + 1) / t.voiceSteps.length) * 100}%` }}
           />
         </div>
 
-        <div className="p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 space-y-6 overflow-y-auto flex-1">
 
           {/* Step Counter & Category Badge */}
           <div className="flex items-center justify-between">

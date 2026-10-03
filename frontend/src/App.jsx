@@ -23,6 +23,7 @@ function App() {
   const [beneficiaryProfile, setBeneficiaryProfile] = useState(null);
   const [customMatchedCourses, setCustomMatchedCourses] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [grantApplication, setGrantApplication] = useState(null);
 
   const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
 
@@ -151,6 +152,8 @@ function App() {
           <LivelihoodSchemes
             selectedCourse={selectedCourse}
             beneficiaryProfile={beneficiaryProfile}
+            grantApplication={grantApplication}
+            onGrantApplied={(appData) => setGrantApplication(appData)}
             onProceedToPassbook={() => setCurrentView('passbook')}
             selectedLanguage={selectedLanguage}
           />
@@ -160,6 +163,7 @@ function App() {
           <DigitalPassbook
             beneficiaryProfile={beneficiaryProfile}
             selectedCourse={selectedCourse}
+            grantApplication={grantApplication}
             selectedLanguage={selectedLanguage}
           />
         )}

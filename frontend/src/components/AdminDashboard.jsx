@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, MapPin, Users, TrendingUp, Award, FileText, Sparkles, Download, Phone, CheckCircle2, UserCheck, Briefcase, Landmark, Printer, Search, PlusCircle, ArrowUpRight } from 'lucide-react';
+import { Shield, MapPin, Users, TrendingUp, Award, FileText, Sparkles, Download, Phone, CheckCircle2, UserCheck, Briefcase, Landmark, Printer, Search, PlusCircle, ArrowUpRight, X, Eye } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { DISTRICT_DEMAND } from '../data/seedData';
 import {
   fetchHeatmapData,
@@ -130,8 +132,270 @@ const AdminDashboard = ({ selectedLanguage = 'en' }) => {
     });
   };
 
-  const handlePrintPlan = () => {
-    window.print();
+  const [isDppModalOpen, setIsDppModalOpen] = useState(false);
+
+  // Real Direct PDF Generator using jsPDF and autoTable (No Print Dialog!)
+  const handleDownloadDirectPDF = () => {
+    const data = actionPlanData || plansList[0] || {
+      district: selectedDistrict?.district || 'Salem',
+      state: selectedDistrict?.state || 'Tamil Nadu',
+      totalGiaBudget: '₹ 4.80 Crores',
+      annualBudget2026: '₹ 96 Lakhs',
+      totalTargetBeneficiaries: 2400
+    };
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const district = data.district || 'Salem';
+    const state = data.state || 'Tamil Nadu';
+    const stateCodeMap = {
+      'Tamil Nadu': 'TN',
+      'Madhya Pradesh': 'MP',
+      'Telangana': 'TS',
+      'Uttar Pradesh': 'UP',
+      'Bihar': 'BR',
+      'Andhra Pradesh': 'AP',
+      'Karnataka': 'KA',
+      'Maharashtra': 'MH'
+    };
+    const stateCode = stateCodeMap[state] || (state || 'TN').slice(0, 2).toUpperCase();
+    const distCode = (district || 'SLM').slice(0, 3).toUpperCase();
+    const refCode = `MoSJE/GIA/DPP/${stateCode}/${distCode}/2026-31`;
+    const issueDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    // Outer Decorative Border
+    doc.setDrawColor(8, 127, 91);
+    doc.setLineWidth(0.8);
+    doc.rect(8, 8, 194, 280);
+
+    // Top Green Band
+    doc.setFillColor(8, 127, 91);
+    doc.rect(8, 8, 194, 3.5, 'F');
+
+    // Header Content
+    doc.setTextColor(36, 48, 44);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text("GOVERNMENT OF INDIA", 105, 17, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setTextColor(8, 127, 91);
+    doc.text("MINISTRY OF SOCIAL JUSTICE AND EMPOWERMENT (MoSJE)", 105, 23, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(92, 110, 103);
+    doc.text("Department of Social Justice and Empowerment - Shastri Bhawan, New Delhi", 105, 27.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(8, 127, 91);
+    doc.text("PRADHAN MANTRI ANUSUCHIT JAATI ABHYUDAY YOJANA (PM-AJAY)", 105, 34, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.setTextColor(36, 48, 44);
+    doc.text("5-YEAR DISTRICT PERSPECTIVE PLAN (2026 - 2031)", 105, 40, { align: 'center' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(92, 110, 103);
+    doc.text("Grant-in-Aid (GIA) Component for SC Livelihood Saturation & Enterprise Promotion", 105, 44.5, { align: 'center' });
+
+    // Divider line
+    doc.setDrawColor(226, 219, 208);
+    doc.setLineWidth(0.4);
+    doc.line(14, 47, 196, 47);
+
+    // Administrative Info Block
+    doc.setFillColor(250, 249, 246);
+    doc.rect(14, 50, 182, 16, 'F');
+    doc.setDrawColor(226, 219, 208);
+    doc.rect(14, 50, 182, 16, 'S');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(92, 110, 103);
+    doc.text("DOCUMENT REF NO:", 18, 55.5);
+    doc.text("DISTRICT & STATE:", 108, 55.5);
+    doc.text("APPRAISAL STATUS:", 18, 62);
+    doc.text("DATE OF ISSUE:", 108, 62);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(8, 127, 91);
+    doc.text(refCode, 52, 55.5);
+    doc.text("APPROVED BY DLIC / MoSJE", 52, 62);
+
+    doc.setTextColor(36, 48, 44);
+    doc.text(`${district}, ${state}`, 142, 55.5);
+    doc.text(issueDate, 142, 62);
+
+    // Section 1: Executive Appraisal
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(8, 127, 91);
+    doc.text("1. EXECUTIVE APPRAISAL & BASELINE SOCIO-ECONOMIC PROFILE", 14, 72);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.8);
+    doc.setTextColor(36, 48, 44);
+    const summaryText = `Under the statutory guidelines of the Grant-in-Aid (GIA) component of PM-AJAY, this 5-Year District Perspective Plan establishes the livelihood enhancement and NSQF-aligned skilling roadmap for ${district} District (${state}) covering 2026-2031. With an identified SC population concentration of 28.4%, the plan eliminates informal skill barriers through certified NCVET training and provides capital toolkits up to Rs. 50,000 to transition vulnerable SC families into certified wage employment and self-sustaining micro-enterprises.`;
+    const splitSummary = doc.splitTextToSize(summaryText, 182);
+    doc.text(splitSummary, 14, 76.5);
+
+    // Section 2: Outlay Table
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(8, 127, 91);
+    doc.text("2. YEAR-WISE FINANCIAL OUTLAY & PHYSICAL TARGETS (2026 - 2031)", 14, 94);
+
+    autoTable(doc, {
+      startY: 97,
+      margin: { left: 14, right: 14 },
+      head: [['Plan Year', 'Target Beneficiaries', 'Batches', 'Toolkit Grants', 'Training Cost', 'Stipend DBT', 'Total Outlay']],
+      body: [
+        ['Year 1 (2026-27)', '480 Beneficiaries', '16 Batches', 'Rs. 42.00 L', 'Rs. 28.50 L', 'Rs. 15.00 L', 'Rs. 96.00 Lakhs'],
+        ['Year 2 (2027-28)', '510 Beneficiaries', '17 Batches', 'Rs. 45.00 L', 'Rs. 30.50 L', 'Rs. 16.00 L', 'Rs. 102.50 Lakhs'],
+        ['Year 3 (2028-29)', '550 Beneficiaries', '18 Batches', 'Rs. 48.50 L', 'Rs. 33.00 L', 'Rs. 17.20 L', 'Rs. 110.00 Lakhs'],
+        ['Year 4 (2029-30)', '590 Beneficiaries', '20 Batches', 'Rs. 52.00 L', 'Rs. 35.50 L', 'Rs. 18.50 L', 'Rs. 118.00 Lakhs'],
+        ['Year 5 (2030-31)', '625 Beneficiaries', '21 Batches', 'Rs. 55.00 L', 'Rs. 37.50 L', 'Rs. 19.80 L', 'Rs. 125.00 Lakhs'],
+        ['5-YEAR TOTAL', '2,755 Beneficiaries', '92 Batches', 'Rs. 242.50 L', 'Rs. 165.00 L', 'Rs. 86.50 L', 'Rs. 5.515 Crores']
+      ],
+      theme: 'grid',
+      styles: { fontSize: 7, cellPadding: 1.8, textColor: [36, 48, 44] },
+      headStyles: { fillColor: [8, 127, 91], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+      columnStyles: {
+        0: { fontStyle: 'bold' },
+        6: { fontStyle: 'bold', textColor: [8, 127, 91] }
+      },
+      didParseCell: (cellData) => {
+        if (cellData.row.index === 5) {
+          cellData.cell.styles.fillColor = [230, 244, 240];
+          cellData.cell.styles.fontStyle = 'bold';
+        }
+      }
+    });
+
+    const finalY = doc.lastAutoTable.finalY + 6;
+
+    // Section 3: Trades Table
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(8, 127, 91);
+    doc.text("3. MAPPED PRIORITY NSQF TRADES & GIA CAPITAL TOOLKITS", 14, finalY);
+
+    autoTable(doc, {
+      startY: finalY + 2.5,
+      margin: { left: 14, right: 14 },
+      head: [['QP Code', 'Job Role', 'Level', 'Hours', 'GIA Capital Subsidy & Toolkit Package']],
+      body: [
+        ['SGJ/Q0101', 'Solar PV Installer (Suryamitra)', 'Level 4', '300 Hrs', 'Rs. 50,000 (Clamp Multimeter, MC4 Crimper, Safety Harness, DC Tester)'],
+        ['AMH/Q1947', 'Self Employed Tailor & Fashion Craftsman', 'Level 4', '340 Hrs', 'Rs. 50,000 (Industrial Direct-Drive Motorized Sewing & Overlock Machine)'],
+        ['AER/Q1101', 'Drone Service Technician (Kisan Drone)', 'Level 5', '420 Hrs', 'Rs. 50,000 (Smart LiPo Balancing Charger, Avionics Rig & Spray Calibrator)'],
+        ['ELE/Q1401', 'Field Technician Home Appliances', 'Level 4', '350 Hrs', 'Rs. 45,000 (Digital Testing, Soldering Station & Wire Diagnostic Tools)']
+      ],
+      theme: 'grid',
+      styles: { fontSize: 6.8, cellPadding: 1.8, textColor: [36, 48, 44] },
+      headStyles: { fillColor: [28, 40, 38], textColor: [255, 255, 255], fontStyle: 'bold' },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: [8, 127, 91], cellWidth: 24 },
+        1: { fontStyle: 'bold', cellWidth: 48 },
+        2: { cellWidth: 15, halign: 'center' },
+        3: { cellWidth: 16, halign: 'center' },
+        4: { cellWidth: 79 }
+      }
+    });
+
+    const finalY2 = doc.lastAutoTable.finalY + 10;
+
+    // Signatures Block
+    doc.setDrawColor(36, 48, 44);
+    doc.setLineWidth(0.4);
+
+    // GM DIC
+    doc.line(16, finalY2 + 10, 65, finalY2 + 10);
+    doc.setFontSize(7);
+    doc.setTextColor(8, 127, 91);
+    doc.setFont('helvetica', 'italic');
+    doc.text("Signed (Digital Verification)", 24, finalY2 + 7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(36, 48, 44);
+    doc.text("GENERAL MANAGER", 26, finalY2 + 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.text("District Industries Centre (DIC)", 24, finalY2 + 17.5);
+
+    // MD SCDC
+    doc.line(78, finalY2 + 10, 130, finalY2 + 10);
+    doc.setFontSize(7);
+    doc.setTextColor(8, 127, 91);
+    doc.setFont('helvetica', 'italic');
+    doc.text("Signed (Digital Verification)", 86, finalY2 + 7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(36, 48, 44);
+    doc.text("MANAGING DIRECTOR", 88, finalY2 + 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.text("State SC Development Corp (SCDC)", 81, finalY2 + 17.5);
+
+    // Collector Stamp / DLIC Seal
+    doc.setFillColor(230, 244, 240);
+    doc.roundedRect(141, finalY2 + 2.5, 53, 6, 1, 1, 'F');
+    doc.setDrawColor(8, 127, 91);
+    doc.setLineWidth(0.35);
+    doc.roundedRect(141, finalY2 + 2.5, 53, 6, 1, 1, 'S');
+    doc.setFontSize(6.8);
+    doc.setTextColor(8, 127, 91);
+    doc.setFont('helvetica', 'bold');
+    doc.text("APPROVED UNDER PM-AJAY GIA", 167.5, finalY2 + 6.8, { align: 'center' });
+    doc.line(141, finalY2 + 10, 194, finalY2 + 10);
+    doc.setTextColor(36, 48, 44);
+    doc.setFontSize(7.5);
+    doc.text("DISTRICT MAGISTRATE / COLLECTOR", 142, finalY2 + 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.text("Chairman, DLIC (PM-AJAY)", 153, finalY2 + 17.5);
+
+    // Footer
+    doc.setFontSize(6.5);
+    doc.setTextColor(92, 110, 103);
+    doc.text("Livora AI Engine  |  Ministry of Social Justice & Empowerment (MoSJE)  |  PM-AJAY GIA Component (PS 26097)", 105, 284, { align: 'center' });
+
+    // Save Directly!
+    doc.save(`MoSJE_PM_AJAY_5Year_Perspective_Plan_${district}.pdf`);
+  };
+
+  const handleExportCSV = () => {
+    if (!actionPlanData) return;
+    const rows = [
+      ["PRADHAN MANTRI ANUSUCHIT JAATI ABHYUDAY YOJANA (PM-AJAY)"],
+      ["GIA COMPONENT - 5-YEAR DISTRICT PERSPECTIVE PLAN (2026-2030)"],
+      [`District: ${actionPlanData.district}`, `State: ${actionPlanData.state}`, `Date: ${new Date().toLocaleDateString('en-IN')}`],
+      [""],
+      ["Component / Head", "Year 1 (2026-27)", "Year 2 (2027-28)", "Year 3 (2028-29)", "Year 4 (2029-30)", "Year 5 (2030-31)", "Total 5-Year Outlay (Rs. Lakhs)"],
+      ["Toolkit Capital Asset Grants (Rs. 50k)", "42.00", "45.00", "48.50", "52.00", "55.00", "242.50"],
+      ["Training Costs to ITI/NSTI Centers", "28.50", "30.50", "33.00", "35.50", "37.50", "165.00"],
+      ["Beneficiary Trainee Stipend DBT", "15.00", "16.00", "17.20", "18.50", "19.80", "86.50"],
+      ["Financial Consultant (FC) & Monitoring", "10.50", "11.00", "11.30", "12.00", "12.70", "57.50"],
+      ["TOTAL FINANCIAL OUTLAY (Rs. Lakhs)", "96.00", "102.50", "110.00", "118.00", "125.00", "551.50"],
+      [""],
+      ["Physical Target (SC Beneficiaries)", "480", "510", "550", "590", "625", "2755"],
+      ["Certified Batches Mapped", "16", "17", "18", "20", "21", "92"],
+      ["Projected Placement / Enterprise Rate", "84%", "86%", "88%", "89%", "91%", "87.6% (Avg)"]
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(r => r.map(c => `"${c}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `PM_AJAY_5Year_Perspective_Plan_${actionPlanData.district}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -255,13 +519,31 @@ const AdminDashboard = ({ selectedLanguage = 'en' }) => {
                     </p>
                   </div>
 
-                  <button
-                    onClick={handlePrintPlan}
-                    className="bg-[#FAF9F6] hover:bg-black/5 text-[#24302C] border border-[#E2DBD0] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 print:hidden"
-                  >
-                    <Printer className="w-4 h-4 text-[#087F5B]" />
-                    <span>{t.printPlanBtn}</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2.5 print:hidden">
+                    <button
+                      onClick={handleDownloadDirectPDF}
+                      className="bg-[#087F5B] hover:bg-[#066749] text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-md transition-all active:scale-95"
+                    >
+                      <Download className="w-3.5 h-3.5 text-white" />
+                      <span>Download Official PDF</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsDppModalOpen(true)}
+                      className="bg-[#FAF9F6] hover:bg-black/5 text-[#24302C] border border-[#E2DBD0] px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all shadow-2xs"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[#087F5B]" />
+                      <span>Preview Document</span>
+                    </button>
+
+                    <button
+                      onClick={handleExportCSV}
+                      className="bg-[#FAF9F6] hover:bg-black/5 text-[#24302C] border border-[#E2DBD0] px-3.5 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-[#087F5B]" />
+                      <span>CSV</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Key Metrics Grid */}
@@ -691,6 +973,250 @@ const AdminDashboard = ({ selectedLanguage = 'en' }) => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Official MoSJE 5-Year District Perspective Plan Document Modal */}
+        {isDppModalOpen && actionPlanData && (
+          <div className="fixed inset-0 z-50 bg-[#24302C]/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+            <div className="bg-[#FAF9F6] border border-[#E2DBD0] rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-auto max-h-[96vh] flex flex-col">
+              
+              {/* Modal Control Bar */}
+              <div className="bg-[#1C2826] text-white px-6 py-3.5 flex items-center justify-between flex-shrink-0 print:hidden">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-[#087F5B] flex items-center justify-center text-white text-xs font-black">
+                    🇮🇳
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold font-['Outfit']">
+                      Official MoSJE Document Preview: {actionPlanData.district} 5-Year Plan
+                    </h3>
+                    <p className="text-[10px] text-white/60">
+                      Standard Government format compliant with PM-AJAY GIA Component Guidelines
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleExportCSV}
+                    className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>CSV</span>
+                  </button>
+                  <button
+                    onClick={handleDownloadDirectPDF}
+                    className="bg-[#087F5B] hover:bg-[#066749] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <Download className="w-3.5 h-3.5 text-white" />
+                    <span>Download Official PDF</span>
+                  </button>
+                  <button
+                    onClick={() => setIsDppModalOpen(false)}
+                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Document Printable Sheet */}
+              <div className="p-6 sm:p-10 overflow-y-auto flex-1 bg-white text-[#24302C] space-y-6 shadow-inner print:p-0">
+                
+                {/* Formal MoSJE Header */}
+                <div className="text-center space-y-1.5 border-b-2 border-[#24302C] pb-5">
+                  <div className="text-2xl font-serif">🏛️</div>
+                  <h4 className="text-xs uppercase font-extrabold tracking-widest text-[#5C6E67]">
+                    GOVERNMENT OF INDIA • भारत सरकार
+                  </h4>
+                  <h2 className="text-base sm:text-lg font-black tracking-tight uppercase text-[#24302C] font-['Outfit']">
+                    MINISTRY OF SOCIAL JUSTICE AND EMPOWERMENT (MoSJE)
+                  </h2>
+                  <p className="text-xs font-serif italic text-[#5C6E67]">
+                    Department of Social Justice and Empowerment • New Delhi
+                  </p>
+                  <div className="pt-2">
+                    <span className="inline-block bg-[#087F5B] text-white text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-sm shadow-xs">
+                      PRADHAN MANTRI ANUSUCHIT JAATI ABHYUDAY YOJANA (PM-AJAY)
+                    </span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-[#24302C] pt-1">
+                    5-YEAR DISTRICT PERSPECTIVE PLAN (2026 – 2031)
+                  </h3>
+                  <p className="text-[11px] font-semibold text-[#087F5B]">
+                    Grant-in-Aid (GIA) Component for SC Livelihood Saturation & Enterprise Promotion
+                  </p>
+                </div>
+
+                {/* Administrative Reference Bar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FAF9F6] p-3.5 rounded-xl border border-[#E2DBD0] text-xs">
+                  <div>
+                    <span className="text-[10px] text-[#5C6E67] uppercase font-bold block">Document Ref:</span>
+                    <span className="font-mono font-bold text-[#087F5B]">MoSJE/GIA/DPP/{(actionPlanData?.state || 'TN').slice(0,2).toUpperCase()}/{(actionPlanData?.district || 'SLM').slice(0,3).toUpperCase()}/2026</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#5C6E67] uppercase font-bold block">District & State:</span>
+                    <span className="font-bold text-[#24302C]">{actionPlanData?.district || selectedDistrict?.district || 'Salem'}, {actionPlanData?.state || selectedDistrict?.state || 'Tamil Nadu'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#5C6E67] uppercase font-bold block">Appraisal Status:</span>
+                    <span className="font-bold text-emerald-700">Approved by MoSJE DLIC</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#5C6E67] uppercase font-bold block">Date of Issue:</span>
+                    <span className="font-mono text-[#24302C]">{new Date().toLocaleDateString('en-GB')}</span>
+                  </div>
+                </div>
+
+                {/* Executive Summary */}
+                <div className="space-y-1.5 text-xs text-[#24302C] leading-relaxed">
+                  <h4 className="font-extrabold uppercase text-[#087F5B] tracking-wider text-[11px] border-b border-[#087F5B]/20 pb-1">
+                    1. Executive Appraisal & Socio-Economic Profile
+                  </h4>
+                  <p>
+                    In accordance with the operational guidelines of the <strong>Grant-in-Aid (GIA) component of PM-AJAY</strong>, this 5-Year District Perspective Plan establishes the livelihood enhancement and NSQF-aligned skilling roadmap for <strong>{actionPlanData.district} District</strong> ({actionPlanData.state}) covering the period 2026–2031. With a target SC population concentration of <strong>28.4%</strong>, this plan resolves the mismatch between traditional craft heritage and modern market demand, ensuring comprehensive household saturation.
+                  </p>
+                </div>
+
+                {/* 5-Year Outlay & Targets Table */}
+                <div className="space-y-2">
+                  <h4 className="font-extrabold uppercase text-[#087F5B] tracking-wider text-[11px] border-b border-[#087F5B]/20 pb-1">
+                    2. Year-Wise Financial Outlay & Physical Targets (2026–2031)
+                  </h4>
+                  <div className="overflow-x-auto border border-[#24302C]/40 rounded-xl">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead className="bg-[#FAF9F6] border-b border-[#24302C]/40 text-[#24302C] font-extrabold text-[10px]">
+                        <tr>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Plan Year</th>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Target SC Beneficiaries</th>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Batches</th>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Toolkit Subsidy (₹ L)</th>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Training Cost (₹ L)</th>
+                          <th className="py-2.5 px-3 border-r border-[#E2DBD0]">Stipend DBT (₹ L)</th>
+                          <th className="py-2.5 px-3">Total GIA Outlay</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E2DBD0] text-[11px]">
+                        <tr>
+                          <td className="py-2 px-3 font-bold border-r border-[#E2DBD0]">Year 1 (2026-27)</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">480 Beneficiaries</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">16 Batches</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 42.00 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 28.50 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 15.00 L</td>
+                          <td className="py-2 px-3 font-bold text-[#087F5B]">₹ 96.00 Lakhs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3 font-bold border-r border-[#E2DBD0]">Year 2 (2027-28)</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">510 Beneficiaries</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">17 Batches</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 45.00 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 30.50 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 16.00 L</td>
+                          <td className="py-2 px-3 font-bold text-[#087F5B]">₹ 102.50 Lakhs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3 font-bold border-r border-[#E2DBD0]">Year 3 (2028-29)</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">550 Beneficiaries</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">18 Batches</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 48.50 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 33.00 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 17.20 L</td>
+                          <td className="py-2 px-3 font-bold text-[#087F5B]">₹ 110.00 Lakhs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3 font-bold border-r border-[#E2DBD0]">Year 4 (2029-30)</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">590 Beneficiaries</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">20 Batches</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 52.00 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 35.50 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 18.50 L</td>
+                          <td className="py-2 px-3 font-bold text-[#087F5B]">₹ 118.00 Lakhs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3 font-bold border-r border-[#E2DBD0]">Year 5 (2030-31)</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">625 Beneficiaries</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">21 Batches</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 55.00 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 37.50 L</td>
+                          <td className="py-2 px-3 border-r border-[#E2DBD0]">₹ 19.80 L</td>
+                          <td className="py-2 px-3 font-bold text-[#087F5B]">₹ 125.00 Lakhs</td>
+                        </tr>
+                        <tr className="bg-[#E6F4F0] font-black text-xs text-[#087F5B]">
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30 uppercase">5-Year Total</td>
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30">2,755 Beneficiaries</td>
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30">92 Batches</td>
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30">₹ 242.50 L</td>
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30">₹ 165.00 L</td>
+                          <td className="py-2.5 px-3 border-r border-[#087F5B]/30">₹ 86.50 L</td>
+                          <td className="py-2.5 px-3 text-sm">₹ 5.515 Crores</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Priority Trades & NSQF Pathways */}
+                <div className="space-y-2 text-xs">
+                  <h4 className="font-extrabold uppercase text-[#087F5B] tracking-wider text-[11px] border-b border-[#087F5B]/20 pb-1">
+                    3. Mapped NSQF Trades & GIA Capital Toolkit Entitlements
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className="p-2.5 bg-[#FAF9F6] rounded-xl border border-[#E2DBD0]">
+                      <span className="font-bold text-[#087F5B]">SGJ/Q0101: Solar PV Installer (Suryamitra) - Level 4</span>
+                      <p className="text-[10px] text-[#5C6E67]">Toolkit Grant: ₹50,000 (Clamp Multimeter, MC4 Crimper, Fall-protection safety harness)</p>
+                    </div>
+                    <div className="p-2.5 bg-[#FAF9F6] rounded-xl border border-[#E2DBD0]">
+                      <span className="font-bold text-[#087F5B]">AMH/Q1947: Self Employed Tailor & Fashion Craftsman - Level 4</span>
+                      <p className="text-[10px] text-[#5C6E67]">Toolkit Grant: ₹50,000 (Industrial Motorized Direct-Drive Sewing & Overlock Machine)</p>
+                    </div>
+                    <div className="p-2.5 bg-[#FAF9F6] rounded-xl border border-[#E2DBD0]">
+                      <span className="font-bold text-[#087F5B]">AER/Q1101: Drone Service Technician (Kisan Drone) - Level 5</span>
+                      <p className="text-[10px] text-[#5C6E67]">Toolkit Grant: ₹50,000 (Smart LiPo Balancing Charger, Avionics Rig & Spray Calibrator)</p>
+                    </div>
+                    <div className="p-2.5 bg-[#FAF9F6] rounded-xl border border-[#E2DBD0]">
+                      <span className="font-bold text-[#087F5B]">ELE/Q1401: Field Technician Home Appliances - Level 4</span>
+                      <p className="text-[10px] text-[#5C6E67]">Toolkit Grant: ₹45,000 (Digital Testing & Soldering Repair Station)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Official Sign-Off Block */}
+                <div className="pt-6 border-t-2 border-[#24302C] space-y-4">
+                  <div className="grid grid-cols-3 gap-6 text-center text-[10px]">
+                    <div className="space-y-8">
+                      <div className="font-mono text-emerald-800 font-bold italic pt-4">Signed (Digital)</div>
+                      <div className="border-t border-[#24302C] pt-1">
+                        <p className="font-extrabold text-[#24302C]">General Manager</p>
+                        <p className="text-[#5C6E67]">District Industries Centre (DIC)</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-8">
+                      <div className="font-mono text-emerald-800 font-bold italic pt-4">Signed (Digital)</div>
+                      <div className="border-t border-[#24302C] pt-1">
+                        <p className="font-extrabold text-[#24302C]">Managing Director</p>
+                        <p className="text-[#5C6E67]">State SC Development Corp (SCDC)</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="inline-block border-2 border-[#087F5B] rounded-full p-2 text-[#087F5B] font-extrabold text-[9px] uppercase tracking-wider transform -rotate-3">
+                        ★ APPROVED ★<br/>
+                        DISTRICT COLLECTOR
+                      </div>
+                      <div className="border-t border-[#24302C] pt-1">
+                        <p className="font-extrabold text-[#24302C]">District Magistrate / Collector</p>
+                        <p className="text-[#5C6E67]">Chairman, DLIC (PM-AJAY)</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
           </div>
         )}

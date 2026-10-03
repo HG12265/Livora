@@ -2,7 +2,7 @@ import React from 'react';
 import { QrCode, Download, Volume2, ShieldCheck, Award, MapPin, CheckCircle, Sparkles, Printer, User, Phone, Landmark } from 'lucide-react';
 import { TRANSLATIONS } from '../data/translations';
 
-const DigitalPassbook = ({ beneficiaryProfile, selectedCourse, selectedLanguage = 'en' }) => {
+const DigitalPassbook = ({ beneficiaryProfile, selectedCourse, grantApplication, selectedLanguage = 'en' }) => {
   const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
 
   const profile = beneficiaryProfile || {
@@ -30,11 +30,15 @@ const DigitalPassbook = ({ beneficiaryProfile, selectedCourse, selectedLanguage 
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
 
+    const grantStatusText = grantApplication
+      ? `MoSJE Sanction ID: ${grantApplication.appId}. Grant Status: Approved 50,000 Rupees Capital Subsidy.`
+      : `Sanctioned GIA Toolkit Grant: ${course.giaToolkitGrant}.`;
+
     const textMap = {
-      ta: `வணக்கம் ${profile.name}! உங்கள் PM-AJAY டிஜிட்டல் பாஸ்புக் தயார். ஐடி: ${profile.id}. தேர்ந்தெடுக்கப்பட்ட NSQF பயிற்சி: ${course.role}. உங்களுக்கு அனுமதிக்கப்பட்ட GIA மானியம்: ${course.giaToolkitGrant}. உங்கள் நிதி ஆலோசகர்: ${profile.assignedConsultant}.`,
-      en: `Hello ${profile.name}! Your PM-AJAY Digital Livelihood Passbook is generated. ID: ${profile.id}. Selected NSQF training: ${course.role}. Sanctioned GIA Toolkit Grant: ${course.giaToolkitGrant}. Assigned Financial Consultant: ${profile.assignedConsultant}.`,
-      hi: `नमस्ते ${profile.name}! आपका पीएम-अजय डिजिटल पासबुक तैयार है। आईडी: ${profile.id}। अनुशंसित प्रशिक्षण: ${course.role}। स्वीकृत अनुदान: ${course.giaToolkitGrant}। आपके वित्तीय सलाहकार: ${profile.assignedConsultant}।`,
-      te: `నమస్కారం ${profile.name}! మీ పీఎం-అజయ్ డిజిటల్ పాస్‌బుక్ సిద్ధంగా ఉంది. ఐడీ: ${profile.id}. ఎంచుకున్న శిక్షణ: ${course.role}. మంజూరు చేయబడిన గ్రాంట్: ${course.giaToolkitGrant}. మీ ఆర్థిక సలహాదారు: ${profile.assignedConsultant}.`
+      ta: `வணக்கம் ${profile.name}! உங்கள் PM-AJAY டிஜிட்டல் பாஸ்புக் தயார். ஐடி: ${profile.id}. தேர்ந்தெடுக்கப்பட்ட NSQF பயிற்சி: ${course.role}. ${grantApplication ? `அனுமதிக்கப்பட்ட மானிய எண்: ${grantApplication.appId}. 50,000 ரூபாய் இலவச டூல்கிட் மானியம் உறுதி செய்யப்பட்டது.` : `உங்களுக்கு அனுமதிக்கப்பட்ட GIA மானியம்: ${course.giaToolkitGrant}.`} உங்கள் நிதி ஆலோசகர்: ${grantApplication?.assignedFc || profile.assignedConsultant}.`,
+      en: `Hello ${profile.name}! Your PM-AJAY Digital Livelihood Passbook is generated. ID: ${profile.id}. Selected NSQF training: ${course.role}. ${grantStatusText} Assigned Financial Consultant: ${grantApplication?.assignedFc || profile.assignedConsultant}.`,
+      hi: `नमस्ते ${profile.name}! आपका पीएम-अजय डिजिटल पासबुक तैयार है। आईडी: ${profile.id}। अनुशंसित प्रशिक्षण: ${course.role}। ${grantApplication ? `स्वीकृत अनुदान संख्या: ${grantApplication.appId}। 50,000 रुपये टूलकिट स्वीकृत।` : `स्वीकृत अनुदान: ${course.giaToolkitGrant}।`} आपके वित्तीय सलाहकार: ${grantApplication?.assignedFc || profile.assignedConsultant}।`,
+      te: `నమస్కారం ${profile.name}! మీ పీఎం-అజయ్ డిజిటల్ పాస్‌బుక్ సిద్ధంగా ఉంది. ఐడీ: ${profile.id}. ఎంచుకున్న శిక్షణ: ${course.role}. ${grantApplication ? `మంజూరు సంఖ్య: ${grantApplication.appId}. 50,000 రూపాయల టూల్‌కిట్ గ్రాంట్ ఆమోదించబడింది.` : `మంజూరు చేయబడిన గ్రాంట్: ${course.giaToolkitGrant}.`} మీ ఆర్థిక సలహాదారు: ${grantApplication?.assignedFc || profile.assignedConsultant}.`
     };
 
     const utterance = new SpeechSynthesisUtterance(textMap[selectedLanguage] || textMap.en);
@@ -153,6 +157,61 @@ const DigitalPassbook = ({ beneficiaryProfile, selectedCourse, selectedLanguage 
               <span className="font-black text-[#087F5B]">{course.giaToolkitGrant}</span>
             </div>
           </div>
+
+          {/* Official MoSJE GIA Grant Sanction Certificate Box */}
+          {grantApplication && (
+            <div className="bg-[#FFFDF9] p-5 rounded-2xl border-2 border-amber-300 shadow-md space-y-3 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-[#087F5B] text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl shadow-xs">
+                MoSJE Sanctioned
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 font-bold text-lg">
+                  📜
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 block">
+                    PM-AJAY GIA Capital Subsidy Certificate
+                  </span>
+                  <p className="text-xs font-mono font-bold text-[#087F5B]">
+                    Sanction Ref: {grantApplication.appId}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs bg-white p-3 rounded-xl border border-amber-200/80">
+                <div>
+                  <span className="text-[10px] text-[#5C6E67] uppercase font-bold">Approved Grant:</span>
+                  <p className="font-black text-[#087F5B]">{grantApplication.grantAmount} (100% Free)</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#5C6E67] uppercase font-bold">Loan Linkage:</span>
+                  <p className="font-bold text-[#24302C]">{grantApplication.loanType}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#5C6E67] uppercase font-bold">Assigned Consultant:</span>
+                  <p className="font-bold text-[#087F5B]">{grantApplication.assignedFc}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-[#5C6E67] uppercase font-bold">Consultant Phone:</span>
+                  <p className="font-bold font-mono text-[#24302C]">{grantApplication.fcPhone}</p>
+                </div>
+              </div>
+
+              {grantApplication.toolkitItems && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-[#5C6E67] uppercase">Sanctioned Toolkit Items:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {grantApplication.toolkitItems.map((item, i) => (
+                      <span key={i} className="text-[10px] bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-lg font-medium">
+                        ✓ {item.name.split('&')[0]}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons: Voice Playback & Print / Download */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 print:hidden">
