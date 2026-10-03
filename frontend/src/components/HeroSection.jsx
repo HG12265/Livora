@@ -1,122 +1,152 @@
-import React from 'react';
-import { Mic, ArrowRight, Play, Sparkles, Volume2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Mic, ArrowRight, Play, Sparkles, Volume2, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import heroBeneficiaryImg from '../assets/hero_beneficiary.jpg';
+import { TRANSLATIONS } from '../data/translations';
 
-const HeroSection = ({ onStartSpeaking, onHowItWorksClick }) => {
+const HeroSection = ({ onStartSpeaking, onHowItWorksClick, selectedLanguage = 'en' }) => {
+  const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+  const handlePlaySample = () => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(t.heroSpeechBubble);
+    const langMap = { ta: 'ta-IN', en: 'en-IN', hi: 'hi-IN', te: 'te-IN' };
+    utterance.lang = langMap[selectedLanguage] || 'en-IN';
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => setIsPlayingAudio(true);
+    utterance.onend = () => setIsPlayingAudio(false);
+    utterance.onerror = () => setIsPlayingAudio(false);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
-    <section className="relative overflow-hidden bg-[#FAF9F6] pt-8 pb-16 lg:pt-12 lg:pb-24 px-6 lg:px-16">
+    <section className="relative overflow-hidden bg-[#FAF9F6] pt-6 pb-14 lg:pt-10 lg:pb-20 px-4 sm:px-6 lg:px-12">
       
-      {/* Background Subtle Gradient Blobs */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#F4EDE2] rounded-full blur-3xl opacity-60 -z-10 transform translate-x-1/3 -translate-y-1/3"></div>
-      <div className="absolute bottom-0 left-10 w-80 h-80 bg-[#E6F4F0] rounded-full blur-3xl opacity-50 -z-10"></div>
+      {/* Subtle background ambient gradients */}
+      <div className="absolute top-0 right-10 w-96 h-96 bg-[#E6F4F0]/60 rounded-full blur-3xl pointer-events-none -z-10"></div>
+      <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#F4EDE2]/70 rounded-full blur-3xl pointer-events-none -z-10"></div>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         
-        {/* Left Text Content */}
-        <div className="lg:col-span-6 space-y-6">
+        {/* Left Column: Headline & Action */}
+        <div className="lg:col-span-6 space-y-5">
           
           {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#E6F4F0] border border-[#087F5B]/20 text-[#087F5B] px-4 py-1.5 rounded-full text-xs font-bold tracking-wide">
+          <div className="inline-flex items-center gap-2 bg-[#E6F4F0] border border-[#087F5B]/30 text-[#087F5B] px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-[#087F5B]" />
-            <span>AI-Powered Voice Assistant</span>
+            <span>{t.heroBadge}</span>
           </div>
 
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#24302C] tracking-tight leading-[1.1] font-['Outfit']">
-            Your Skills.<br />
-            Your Path.<br />
-            <span className="text-[#087F5B]">Your Future.</span>
+          {/* Main Headline with balanced Indic typography */}
+          <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-[#24302C] tracking-tight leading-[1.2]">
+            <span>{t.heroTitle1}</span>{' '}
+            <span>{t.heroTitle2}</span><br />
+            <span className="text-[#087F5B]">{t.heroTitle3}</span>
           </h1>
 
           {/* Subheadline Description */}
-          <p className="text-base sm:text-lg text-[#5C6E67] font-normal max-w-xl leading-relaxed">
-            A simple voice-based platform that helps you discover skill training and livelihood opportunities, matched to your needs and location.
+          <p className="text-sm sm:text-base text-[#5C6E67] font-normal leading-relaxed max-w-xl">
+            {t.heroDesc}
           </p>
 
           {/* Call to Action Buttons */}
-          <div className="flex flex-wrap items-center gap-4 pt-3">
+          <div className="flex flex-wrap items-center gap-3.5 pt-2">
             <button
               onClick={onStartSpeaking}
-              className="flex items-center gap-3 bg-[#087F5B] hover:bg-[#066749] text-white px-8 py-4 rounded-full text-base font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all group"
+              className="flex items-center gap-2.5 bg-[#087F5B] hover:bg-[#066749] text-white px-7 py-3.5 rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all group active:scale-95"
             >
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Mic className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                <Mic className="w-3.5 h-3.5 text-white group-hover:scale-110 transition-transform" />
               </div>
-              <span>Start Speaking</span>
-              <ArrowRight className="w-5 h-5 text-white/90 group-hover:translate-x-1 transition-transform" />
+              <span>{t.heroStartBtn}</span>
+              <ArrowRight className="w-4 h-4 text-white/90 group-hover:translate-x-1 transition-transform" />
             </button>
 
             <button
               onClick={onHowItWorksClick}
-              className="flex items-center gap-2.5 bg-transparent border-2 border-[#E2DBD0] hover:border-[#087F5B] text-[#087F5B] px-7 py-3.5 rounded-full text-base font-bold hover:bg-[#E6F4F0]/50 transition-all"
+              className="flex items-center gap-2 bg-white border border-[#E2DBD0] hover:border-[#087F5B] text-[#087F5B] px-6 py-3.5 rounded-full text-sm font-bold hover:bg-[#E6F4F0]/40 transition-all shadow-sm active:scale-95"
             >
-              <div className="w-7 h-7 rounded-full bg-[#E6F4F0] flex items-center justify-center text-[#087F5B]">
-                <Play className="w-3.5 h-3.5 fill-[#087F5B]" />
+              <div className="w-6 h-6 rounded-full bg-[#E6F4F0] flex items-center justify-center text-[#087F5B]">
+                <Play className="w-3 h-3 fill-[#087F5B]" />
               </div>
-              <span>How It Works</span>
+              <span>{t.heroHowBtn}</span>
             </button>
           </div>
 
           {/* Beneficiary Empowerment Note */}
-          <div className="flex items-center gap-3 pt-2 text-xs text-[#5C6E67] font-semibold">
+          <div className="flex items-center gap-2.5 pt-2 text-xs text-[#5C6E67] font-medium">
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#087F5B] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#087F5B]"></span>
             </span>
-            <span>Supports Tamil, Hindi, Telugu, English & Regional Dialects</span>
+            <span>{t.heroLangSupport}</span>
           </div>
 
         </div>
 
-        {/* Right Visual Stack - Indian Woman Beneficiary & Floating Mic */}
-        <div className="lg:col-span-6 relative flex justify-center items-center">
+        {/* Right Column: Sleek Framed Card with Live Voice Widget */}
+        <div className="lg:col-span-6 flex justify-center">
           
-          {/* Organic Organic Shape Background Leaf Pill */}
-          <div className="relative w-full max-w-lg aspect-square">
+          <div className="w-full max-w-md bg-white p-3.5 rounded-3xl border border-[#E2DBD0] shadow-xl space-y-3 relative">
             
-            {/* Organic Sand backdrop */}
-            <div className="absolute inset-0 bg-[#F4EDE2] rounded-[140px_40px_160px_40px] transform rotate-3 scale-95 opacity-90"></div>
-            
-            {/* Organic Emerald Accent Circle */}
-            <div className="absolute top-6 left-6 w-32 h-32 bg-[#087F5B]/10 rounded-full blur-xl"></div>
-
-            {/* Main Beneficiary Image Mask */}
-            <div className="relative w-full h-full rounded-[120px_30px_140px_30px] overflow-hidden border-4 border-white shadow-xl">
+            {/* Beneficiary Photo Container */}
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[#F4EDE2] border border-[#E2DBD0]">
               <img
                 src={heroBeneficiaryImg}
                 alt="Beneficiary interacting with Voice Assistant"
                 className="w-full h-full object-cover object-center"
               />
+              
+              {/* Floating Verified Badge */}
+              <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-extrabold text-[#087F5B] flex items-center gap-1.5 shadow-md border border-[#087F5B]/20">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#087F5B]" />
+                <span>MoSJE PM-AJAY GIA</span>
+              </div>
             </div>
 
-            {/* Floating Audio Speech Bubble (Top Right) */}
-            <div className="absolute -top-4 right-0 lg:-right-4 bg-white/95 backdrop-blur-md border border-[#E2DBD0] rounded-2xl shadow-xl p-4 flex items-center gap-3 max-w-xs animate-bounce-slow">
-              <div className="w-10 h-10 rounded-full bg-[#E6F4F0] flex items-center justify-center text-[#087F5B] shrink-0">
-                {/* Audio Wave animation */}
-                <div className="flex items-center gap-0.5 h-4">
+            {/* Integrated Interactive Voice Audio Bar */}
+            <div className="bg-[#FAF9F6] border border-[#E2DBD0] rounded-2xl p-3.5 space-y-2.5 shadow-inner">
+              
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold text-[#E98B73] uppercase tracking-wider flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E98B73] animate-ping"></span>
+                  {t.heroSpeechLiveBadge}
+                </span>
+
+                <button
+                  onClick={handlePlaySample}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
+                    isPlayingAudio 
+                      ? 'bg-[#087F5B] text-white shadow-sm' 
+                      : 'bg-white border border-[#E2DBD0] text-[#087F5B] hover:bg-[#E6F4F0]'
+                  }`}
+                  title="Click to hear voice sample"
+                >
+                  <Volume2 className="w-3.5 h-3.5" />
+                  <span>{isPlayingAudio ? 'Playing...' : 'Tap to Listen'}</span>
+                </button>
+              </div>
+
+              {/* Sample Spoken text with Animated Waveform */}
+              <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-[#E2DBD0]">
+                {/* Audio Waves */}
+                <div className="flex items-center gap-0.5 h-5 flex-shrink-0">
+                  <div className="wave-bar"></div>
                   <div className="wave-bar"></div>
                   <div className="wave-bar"></div>
                   <div className="wave-bar"></div>
                   <div className="wave-bar"></div>
                 </div>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-[#24302C]">Voice Assistant Active</p>
-                <p className="text-[11px] text-[#5C6E67] font-medium leading-tight">
-                  "Tell me about your skills, interests and goals..."
+
+                <p className="text-xs font-semibold text-[#24302C] leading-snug truncate">
+                  "{t.heroSpeechBubble}"
                 </p>
               </div>
-            </div>
 
-            {/* Interactive Microphone Pulse Button (Right Side Ripple) */}
-            <div className="absolute bottom-8 -right-4 lg:-right-8">
-              <button
-                onClick={onStartSpeaking}
-                className="w-20 h-20 rounded-full bg-[#087F5B] text-white flex items-center justify-center shadow-2xl animate-mic-pulse hover:scale-110 transition-transform cursor-pointer group"
-                title="Click to start speaking"
-              >
-                <Mic className="w-9 h-9 text-white group-hover:scale-110 transition-transform" />
-              </button>
             </div>
 
           </div>

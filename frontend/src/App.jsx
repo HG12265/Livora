@@ -6,10 +6,12 @@ import VoiceOnboarding from './components/VoiceOnboarding';
 import NsqfRecommendations from './components/NsqfRecommendations';
 import LivelihoodSchemes from './components/LivelihoodSchemes';
 import DigitalPassbook from './components/DigitalPassbook';
+import GroundHub from './components/GroundHub';
 import AdminDashboard from './components/AdminDashboard';
 import IvrSimulator from './components/IvrSimulator';
 import WhatsappSimulator from './components/WhatsappSimulator';
-import { PhoneCall, MessageSquare } from 'lucide-react';
+import { PhoneCall, MessageSquare, ArrowRight, Sparkles, Award, ShieldCheck, Landmark } from 'lucide-react';
+import { TRANSLATIONS } from './data/translations';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
@@ -22,9 +24,14 @@ function App() {
   const [customMatchedCourses, setCustomMatchedCourses] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
+
   const handleProfileCreated = (profileData, matchedCourses) => {
     if (profileData) setBeneficiaryProfile(profileData);
-    if (matchedCourses) setCustomMatchedCourses(matchedCourses);
+    if (matchedCourses && matchedCourses.length > 0) {
+      setCustomMatchedCourses(matchedCourses);
+      setSelectedCourse(matchedCourses[0]);
+    }
     setCurrentView('nsqf');
   };
 
@@ -64,8 +71,70 @@ function App() {
             <HeroSection
               onStartSpeaking={() => setIsVoiceModalOpen(true)}
               onHowItWorksClick={handleHowItWorksClick}
+              selectedLanguage={selectedLanguage}
             />
-            <HowItWorks onStartStep={handleStartStep} />
+
+            {/* Quick Highlights Callout Bar */}
+            <section className="bg-white border-y border-[#E2DBD0] py-8 px-6 lg:px-16">
+              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 text-xs">
+                <div 
+                  onClick={() => setIsVoiceModalOpen(true)} 
+                  className="bg-[#FAF9F6] p-4 rounded-2xl border border-[#E2DBD0] hover:border-[#087F5B] cursor-pointer transition-all space-y-1"
+                >
+                  <div className="flex items-center gap-2 text-[#087F5B] font-extrabold">
+                    <Sparkles className="w-4 h-4" />
+                    <span>{t.quickVoiceTitle}</span>
+                  </div>
+                  <p className="text-[#5C6E67]">
+                    {t.quickVoiceDesc}
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => setCurrentView('nsqf')} 
+                  className="bg-[#FAF9F6] p-4 rounded-2xl border border-[#E2DBD0] hover:border-[#087F5B] cursor-pointer transition-all space-y-1"
+                >
+                  <div className="flex items-center gap-2 text-[#087F5B] font-extrabold">
+                    <Award className="w-4 h-4" />
+                    <span>{t.quickNsqfTitle}</span>
+                  </div>
+                  <p className="text-[#5C6E67]">
+                    {t.quickNsqfDesc}
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => setCurrentView('schemes')} 
+                  className="bg-[#FAF9F6] p-4 rounded-2xl border border-[#E2DBD0] hover:border-[#087F5B] cursor-pointer transition-all space-y-1"
+                >
+                  <div className="flex items-center gap-2 text-[#087F5B] font-extrabold">
+                    <Landmark className="w-4 h-4" />
+                    <span>{t.quickGrantsTitle}</span>
+                  </div>
+                  <p className="text-[#5C6E67]">
+                    {t.quickGrantsDesc}
+                  </p>
+                </div>
+
+                <div 
+                  onClick={() => setCurrentView('admin')} 
+                  className="bg-[#FAF9F6] p-4 rounded-2xl border border-[#E2DBD0] hover:border-[#087F5B] cursor-pointer transition-all space-y-1"
+                >
+                  <div className="flex items-center gap-2 text-[#087F5B] font-extrabold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{t.quickAdminTitle}</span>
+                  </div>
+                  <p className="text-[#5C6E67]">
+                    {t.quickAdminDesc}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <HowItWorks 
+              onStartStep={handleStartStep} 
+              selectedLanguage={selectedLanguage}
+            />
           </>
         )}
 
@@ -81,7 +150,9 @@ function App() {
         {currentView === 'schemes' && (
           <LivelihoodSchemes
             selectedCourse={selectedCourse}
+            beneficiaryProfile={beneficiaryProfile}
             onProceedToPassbook={() => setCurrentView('passbook')}
+            selectedLanguage={selectedLanguage}
           />
         )}
 
@@ -93,20 +164,28 @@ function App() {
           />
         )}
 
+        {currentView === 'ground' && (
+          <GroundHub 
+            selectedLanguage={selectedLanguage}
+          />
+        )}
+
         {currentView === 'admin' && (
-          <AdminDashboard />
+          <AdminDashboard 
+            selectedLanguage={selectedLanguage}
+          />
         )}
       </main>
 
-      {/* Floating Low-Tech Simulators Buttons */}
-      <div className="fixed bottom-6 left-6 z-40 flex flex-col sm:flex-row items-center gap-3">
+      {/* Floating Low-Tech Simulators Buttons (Feature Phone & WhatsApp Voice Notes) */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col sm:flex-row items-center gap-3 print:hidden">
         <button
           onClick={() => setIsIvrModalOpen(true)}
-          className="bg-[#24302C] hover:bg-[#087F5B] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-xl flex items-center gap-2 transition-all hover:scale-105 border border-white/20"
+          className="bg-[#1C2826] hover:bg-[#087F5B] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-xl flex items-center gap-2 transition-all hover:scale-105 border border-white/20"
           title="Simulate IVR Toll-Free Phone Call (*1800-PMAJAY#)"
         >
           <PhoneCall className="w-4 h-4 text-[#E98B73]" />
-          <span>IVR Helpline (*1800#)</span>
+          <span>{t.ivrBtn}</span>
         </button>
 
         <button
@@ -115,7 +194,7 @@ function App() {
           title="Simulate WhatsApp Voice Note Interface"
         >
           <MessageSquare className="w-4 h-4 text-white" />
-          <span>WhatsApp Voice Bot</span>
+          <span>{t.waBtn}</span>
         </button>
       </div>
 
@@ -141,10 +220,23 @@ function App() {
         selectedLanguage={selectedLanguage}
       />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-[#E2DBD0] py-8 px-6 lg:px-16 text-center text-xs text-[#5C6E67] space-y-2">
-        <p className="font-extrabold text-[#087F5B] font-['Outfit']">Livora — PM-AJAY AI-Driven Voice Assistant (PS 26097)</p>
-        <p>Ministry of Social Justice & Empowerment (MoSJE) • Smart India Hackathon 2026</p>
+      {/* Official Government Footer */}
+      <footer className="bg-white border-t border-[#E2DBD0] py-8 px-6 lg:px-16 text-xs text-[#5C6E67] space-y-3 print:hidden">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+          <div className="space-y-1">
+            <p className="font-extrabold text-[#087F5B] font-['Outfit'] text-sm">
+              {t.footerTitle}
+            </p>
+            <p className="text-[11px]">
+              {t.footerSubtitle}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 text-[11px] font-semibold">
+            <span className="bg-[#E6F4F0] text-[#087F5B] px-3 py-1 rounded-full">{t.sihBadge}</span>
+            <span>{t.footerStatus}</span>
+          </div>
+        </div>
       </footer>
 
     </div>

@@ -1,68 +1,175 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional, Dict, Any
 from services.gemini_service import generate_gia_action_plan_with_gemini
+from database import (
+    get_district_demand,
+    get_all_financial_consultants,
+    add_financial_consultant,
+    get_all_placements,
+    update_placement_status,
+    get_all_perspective_plans,
+    save_perspective_plan,
+    get_all_coordination_tasks,
+    update_coordination_task,
+    save_beneficiary_profile
+)
 
-router = APIRouter(prefix="/api/admin", tags=["MoSJE Admin Engine"])
+router = APIRouter(prefix="/api/admin", tags=["MoSJE PM-AJAY Admin & Ground Engine"])
 
 class PlanGenerateRequest(BaseModel):
     district: str = "Salem"
     state: str = "Tamil Nadu"
 
 class AssignConsultantRequest(BaseModel):
-    beneficiary_id: str = "PMAJAY-SC-2026-8841"
-    beneficiary_name: str = "Gowtham"
-    consultant_name: str = "Mr. R. Ramesh"
-    district: str = "Salem"
+    beneficiary_id: str
+    beneficiary_name: str
+    consultant_name: str
+    district: Optional[str] = "Salem"
 
-# In-memory financial consultants registry
-CONSULTANTS_REGISTRY = [
-    {"id": "FC-SLM-01", "name": "Mr. R. Ramesh", "district": "Salem", "state": "Tamil Nadu", "phone": "+91 94432 10987", "active_beneficiaries": 42, "grant_sanctioned": "₹ 18.5 Lakhs", "status": "Active"},
-    {"id": "FC-SLM-02", "name": "Smt. K. Kavitha", "district": "Salem", "state": "Tamil Nadu", "phone": "+91 98421 55670", "active_beneficiaries": 38, "grant_sanctioned": "₹ 16.0 Lakhs", "status": "Active"},
-    {"id": "FC-[#MDU-01", "name": "Mr. S. Murugan", "district": "Madurai", "state": "Tamil Nadu", "phone": "+91 97890 44321", "active_beneficiaries": 55, "grant_sanctioned": "₹ 24.2 Lakhs", "status": "Active"},
-    {"id": "FC-[#VRN-01", "name": "Mr. A. K. Sharma", "district": "Varanasi", "state": "Uttar Pradesh", "phone": "+91 91234 88765", "active_beneficiaries": 64, "grant_sanctioned": "₹ 28.0 Lakhs", "status": "Active"}
-]
+class AddConsultantRequest(BaseModel):
+    name: str
+    district: str
+    state: str
+    phone: str
+    email: Optional[str] = ""
+    certification: str
+    activeBeneficiaries: Optional[int] = 0
+    grantSanctioned: Optional[str] = "₹ 0.0 Lakhs"
+    loansFacilitated: Optional[str] = "₹ 0.0 Lakhs"
+    status: Optional[str] = "Active"
 
-# In-memory placement lifecycle pipeline
-PLACEMENT_PIPELINE = [
-    {"id": "PMAJAY-SC-2026-8841", "name": "Gowtham", "district": "Salem", "course": "Organic Agri-Input Producer (NSQF Level 4)", "status": "NSQF Certified", "outcomeType": "Self-Employment", "grantStatus": "Toolkit Grant Sanctioned (₹35,000)", "assignedConsultant": "Mr. R. Ramesh"},
-    {"id": "PMAJAY-SC-2026-8842", "name": "Kavitha R", "district": "Salem", "course": "Solar PV Installer (NSQF Level 4)", "status": "In Training", "outcomeType": "Wage Job", "grantStatus": "Transport Allowance Active", "assignedConsultant": "Smt. K. Kavitha"},
-    {"id": "PMAJAY-SC-2026-8843", "name": "M. Karthik", "district": "Madurai", "course": "Data Entry Saksham (NSQF Level 4)", "status": "Placed in Job", "outcomeType": "Wage Job (₹18,000/mo)", "grantStatus": "Completed", "assignedConsultant": "Mr. S. Murugan"},
-    {"id": "PMAJAY-SC-2026-8844", "name": "P. Lakshmi", "district": "Villupuram", "course": "Master Weaver (NSQF Level 4)", "status": "Enterprise Started", "outcomeType": "Handloom SHG Leader", "grantStatus": "Modernization Grant Released (₹50,000)", "assignedConsultant": "Mr. R. Ramesh"}
-]
+class UpdatePlacementStatusRequest(BaseModel):
+    id: str
+    new_status: str
+    outcomeType: Optional[str] = None
+    employerOrUnit: Optional[str] = None
+    incomeOrSalary: Optional[str] = None
+
+class UpdateCoordinationTaskRequest(BaseModel):
+    task_id: str
+    status: str
+
+class GroundRegisterRequest(BaseModel):
+    name: str
+    village: str
+    district: str
+    state: str = "Tamil Nadu"
+    education: str
+    traditionalOccupation: str
+    preference: str = "Self-Employment"
+    contactPhone: Optional[str] = ""
+    assignedFacilitator: Optional[str] = "Gram Panchayat Village Mitra"
 
 @router.get("/heatmap")
 def get_heatmap_analytics():
     return {
         "status": "success",
-        "districts": [
-            {"district": "Salem", "state": "Tamil Nadu", "topDemand": "Organic Agriculture & Solar PV", "scPopulation": "18.4%", "activeBeneficiaries": 1420, "placementRate": "84%"},
-            {"district": "Madurai", "state": "Tamil Nadu", "topDemand": "Agri-Processing & Mobile Tech", "scPopulation": "21.2%", "activeBeneficiaries": 1890, "placementRate": "82%"},
-            {"district": "Villupuram", "state": "Tamil Nadu", "topDemand": "Bio-Inputs & Modern Apparel", "scPopulation": "28.6%", "activeBeneficiaries": 2310, "placementRate": "74%"},
-            {"district": "Varanasi", "state": "Uttar Pradesh", "topDemand": "Handicrafts & Digital Saksham", "scPopulation": "19.8%", "activeBeneficiaries": 3100, "placementRate": "80%"},
-            {"district": "Patna", "state": "Bihar", "topDemand": "Data Entry & Solar Technician", "scPopulation": "16.5%", "activeBeneficiaries": 2750, "placementRate": "76%"}
-        ]
+        "districts": get_district_demand()
     }
 
 @router.get("/consultants")
 def get_consultants():
-    return {"status": "success", "consultants": CONSULTANTS_REGISTRY}
+    return {
+        "status": "success",
+        "consultants": get_all_financial_consultants()
+    }
 
-@router.get("/placements")
-def get_placements():
-    return {"status": "success", "placements": PLACEMENT_PIPELINE}
+@router.post("/consultants")
+def register_consultant(req: AddConsultantRequest):
+    new_fc = add_financial_consultant(req.dict())
+    return {
+        "status": "success",
+        "message": f"Financial Consultant {req.name} registered under PM-AJAY GIA",
+        "consultant": new_fc
+    }
 
 @router.post("/assign-consultant")
 def assign_consultant(req: AssignConsultantRequest):
     return {
         "status": "success",
-        "message": f"Assigned Financial Consultant {req.consultant_name} to beneficiary {req.beneficiary_name} ({req.beneficiary_id})",
+        "message": f"Successfully mapped Financial Consultant {req.consultant_name} to beneficiary {req.beneficiary_name} ({req.beneficiary_id})",
         "assignment": req.dict()
+    }
+
+@router.get("/placements")
+def get_placements():
+    return {
+        "status": "success",
+        "placements": get_all_placements()
+    }
+
+@router.post("/placements/update-status")
+def update_placement(req: UpdatePlacementStatusRequest):
+    updated = update_placement_status(
+        record_id=req.id,
+        new_status=req.new_status,
+        outcome_type=req.outcomeType,
+        employer_or_unit=req.employerOrUnit,
+        income=req.incomeOrSalary
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Placement record not found")
+    return {
+        "status": "success",
+        "message": f"Updated status to '{req.new_status}' for {updated['name']}",
+        "record": updated
+    }
+
+@router.get("/perspective-plans")
+def get_perspective_plans():
+    return {
+        "status": "success",
+        "plans": get_all_perspective_plans()
     }
 
 @router.post("/generate-plan")
 def generate_perspective_plan(req: PlanGenerateRequest):
     action_plan = generate_gia_action_plan_with_gemini(req.district, req.state)
+    saved_plan = save_perspective_plan(action_plan)
     return {
         "status": "success",
-        "action_plan": action_plan
+        "message": f"5-Year Perspective Plan generated and saved for District {req.district}",
+        "action_plan": saved_plan
+    }
+
+@router.get("/coordination-tasks")
+def get_coordination_tasks():
+    return {
+        "status": "success",
+        "tasks": get_all_coordination_tasks()
+    }
+
+@router.post("/coordination-tasks/update")
+def update_task_status(req: UpdateCoordinationTaskRequest):
+    task = update_coordination_task(req.task_id, req.status)
+    if not task:
+        raise HTTPException(status_code=404, detail="Coordination task not found")
+    return {
+        "status": "success",
+        "message": f"Updated task {req.task_id} to status: {req.status}",
+        "task": task
+    }
+
+@router.post("/ground-register")
+def ground_register_beneficiary(req: GroundRegisterRequest):
+    profile_data = {
+        "name": req.name,
+        "location": f"{req.village}, {req.district}, {req.state}",
+        "district": req.district,
+        "state": req.state,
+        "education": req.education,
+        "familyOccupation": req.traditionalOccupation,
+        "currentSkills": f"Ground-verified traditional skills in {req.traditionalOccupation}",
+        "currentActivity": f"Local village livelihood in {req.village}",
+        "mobility": "Local Village Cluster",
+        "preference": req.preference,
+        "facilitator": req.assignedFacilitator,
+        "phone": req.contactPhone
+    }
+    profile_id = save_beneficiary_profile(profile_data)
+    return {
+        "status": "success",
+        "profile_id": profile_id,
+        "message": f"Beneficiary {req.name} registered via Village Ground Support Portal"
     }

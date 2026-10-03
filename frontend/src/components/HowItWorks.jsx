@@ -1,12 +1,15 @@
 import React from 'react';
 import { Mic, Brain, Target, UserCheck, ArrowRight } from 'lucide-react';
+import { TRANSLATIONS } from '../data/translations';
 
-const HowItWorks = ({ onStartStep }) => {
+const HowItWorks = ({ onStartStep, selectedLanguage = 'en' }) => {
+  const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
+
   const steps = [
     {
       stepNum: "1",
-      title: "1. Speak",
-      desc: "Share your details in your language.",
+      title: t.howStep1Title,
+      desc: t.howStep1Desc,
       icon: Mic,
       iconBg: "bg-[#E6F4F0]",
       iconColor: "text-[#087F5B]",
@@ -14,8 +17,8 @@ const HowItWorks = ({ onStartStep }) => {
     },
     {
       stepNum: "2",
-      title: "2. Get Profile",
-      desc: "AI understands and creates your profile.",
+      title: t.howStep2Title,
+      desc: t.howStep2Desc,
       icon: Brain,
       iconBg: "bg-[#FDF1EE]",
       iconColor: "text-[#E98B73]",
@@ -23,8 +26,8 @@ const HowItWorks = ({ onStartStep }) => {
     },
     {
       stepNum: "3",
-      title: "3. Explore Options",
-      desc: "Find suitable skill training and opportunities.",
+      title: t.howStep3Title,
+      desc: t.howStep3Desc,
       icon: Target,
       iconBg: "bg-[#E6F4F0]",
       iconColor: "text-[#087F5B]",
@@ -32,8 +35,8 @@ const HowItWorks = ({ onStartStep }) => {
     },
     {
       stepNum: "4",
-      title: "4. Take Action",
-      desc: "Connect with training and get support.",
+      title: t.howStep4Title,
+      desc: t.howStep4Desc,
       icon: UserCheck,
       iconBg: "bg-[#FDF1EE]",
       iconColor: "text-[#E98B73]",
@@ -46,9 +49,9 @@ const HowItWorks = ({ onStartStep }) => {
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
-        <div className="mb-10">
+        <div className="mb-10 text-center sm:text-left">
           <p className="text-xs font-extrabold uppercase tracking-widest text-[#087F5B] font-['Outfit']">
-            HOW IT WORKS
+            {t.howHeader}
           </p>
         </div>
 
@@ -70,12 +73,12 @@ const HowItWorks = ({ onStartStep }) => {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-lg font-bold text-[#24302C] mb-2 font-['Outfit'] group-hover:text-[#087F5B] transition-colors">
+                <h3 className="text-base font-bold text-[#24302C] mb-2 font-['Outfit'] group-hover:text-[#087F5B] transition-colors">
                   {step.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-[#5C6E67] font-normal leading-relaxed">
+                <p className="text-xs text-[#5C6E67] font-normal leading-relaxed">
                   {step.desc}
                 </p>
 
