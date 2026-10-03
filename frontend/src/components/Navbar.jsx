@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Leaf, Globe, ChevronDown, Shield, Mic, Phone, MessageSquare, Award, Landmark, QrCode, Users } from 'lucide-react';
+import { Leaf, Globe, ChevronDown, Shield, Mic, Phone, MessageSquare, Award, Landmark, QrCode, Users, Home as HomeIcon } from 'lucide-react';
 import { TRANSLATIONS } from '../data/translations';
 
 const Navbar = ({ currentView, setCurrentView, selectedLanguage, setSelectedLanguage, onOpenVoiceModal }) => {
@@ -15,7 +15,7 @@ const Navbar = ({ currentView, setCurrentView, selectedLanguage, setSelectedLang
   ];
 
   const navItems = [
-    { id: 'home', label: t.navHome, icon: null },
+    { id: 'home', label: t.navHome, icon: HomeIcon },
     { id: 'voice', label: t.navVoice, icon: Mic, highlight: true },
     { id: 'nsqf', label: t.navNsqf, icon: Award },
     { id: 'schemes', label: t.navSchemes, icon: Landmark },
